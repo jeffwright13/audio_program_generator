@@ -1,7 +1,7 @@
 # audio_program_generator
 Generates an audio program from a text file containing English sentences
 
-#Description:
+# Description:
     apg.py: Generate audio program of custom phrases
 
     User populates a text file with plain-text phrases, and accompanying
@@ -13,20 +13,20 @@ Generates an audio program from a text file containing English sentences
     Optionally, the script can play out the entire program (consisting of each
     phrase and its corresponding silence interval), using the "play" option.
 
-#Usage:
+# Usage:
     apg <phrase_file> [-p | --play]
     apg -h | --help
     apg -V | --version
 
-#Arguments:
+# Arguments:
     phrase_file     Name of semi-colon-separated text file
                     containing phrases and silence durations
-#Options:
+# Options:
     -p --play       Play the program after generating it
     -h --help       Show this message and exit
     -V --version    Show version info and exit
 
-#Example phrases file format:
+# Example phrases file format:
     Let's do some qi gong!;2
     Relax your body;60
     Lifting the sky;60
