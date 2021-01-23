@@ -36,3 +36,6 @@ Generates an audio program from a text file containing English sentences
     Flowing stillness;30
     Closing sequence;60
     Good job!;0
+ 
+ # Python Library Dependencies:
+    pip install docopt gtts audioplayer pydub
