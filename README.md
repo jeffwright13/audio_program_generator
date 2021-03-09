@@ -4,25 +4,32 @@ Generates an audio program from a text file containing English sentences
 # Description:
     apg.py: Generate audio program of custom phrases
 
-    User populates a text file with plain-text phrases, and accompanying
-    inter-phrase durations. Each line of the file constitutes one phrase to be
-    spoken, followed by a semicolon, followed by a silence duration in seconds.
+    User populates a semicolon-separated text file with plain-text phrases,
+    and accompanying inter-phrase durations. Each line of the file
+    constitutes one phrase to be spoken, followed by a silence duration in
+    seconds.
 
-    The script generates and saves a single MP3 file ("program.mp3").
+    The script generates and saves a single MP3 file. The base name of the MP3
+    file is the same as the specified input file. So, for example, if the
+    script is given input file "phrases.txt", the output file will be
+    "phrases.mp3".
 
     Optionally, the script can play out the entire program (consisting of each
     phrase and its corresponding silence interval), using the "play" option.
 
 # Usage:
-    apg <phrase_file> [-p | --play]
+    apg <phrase_file> [-p | --play] [-v | --verbose]
     apg -h | --help
     apg -V | --version
 
 # Arguments:
-    phrase_file     Name of semi-colon-separated text file
-                    containing phrases and silence durations
+    phrase_file     Name of semi-colon-separated text file containing
+                    phrases and silence durations. Do not include
+                    commas in this file.
+
 # Options:
     -p --play       Play the program after generating it
+    -v --verbose    Print to console each line from the input .txt file
     -h --help       Show this message and exit
     -V --version    Show version info and exit
 

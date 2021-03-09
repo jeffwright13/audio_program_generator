@@ -21,10 +21,12 @@ Usage:
     apg -V | --version
 
 Arguments:
-    phrase_file     Name of semi-colon-separated text file
-                    containing phrases and silence durations
+    phrase_file     Name of semi-colon-separated text file containing
+                    phrases and silence durations. Do not include
+                    commas in this file.
 Options:
     -p --play       Play the program after generating it
+    -v --verbose    Print to console each line from the input .txt file
     -h --help       Show this message and exit
     -V --version    Show version info and exit
 
