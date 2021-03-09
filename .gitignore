@@ -21,3 +21,4 @@ bak/
 build/
 dist/
 venv/
+.python-version
