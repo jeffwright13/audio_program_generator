@@ -1,3 +1,5 @@
+*.txt
+!phrases.txt
 *.mp3
 *.xml
 *.html
