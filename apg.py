@@ -53,12 +53,20 @@ from audioplayer import AudioPlayer
 from pydub import AudioSegment
 
 
-def mix(segment1, segment2, level1=0, level2=-12):
+def mix(segment1, segment2, level1=0, level2=-12, fadein=2000, fadeout=6000):
     """
     Mixes two pydub AudioSegments (with individual levels)
     Returns mixed AudioSegment
     """
-    return (segment1 + level1).overlay((segment2 + level2), position=0)
+    duration1 = len(segment1)
+    duration2 = len(segment2)
+
+    segment2_normalized = segment2[:duration1]
+    print("durations: ", duration1, duration2)
+
+    return (segment1 + level1).overlay(
+        (segment2_normalized + level2).fade_in(fadein).fade_out(fadeout)
+    )
 
 
 def gen_speech(phrase_file):
