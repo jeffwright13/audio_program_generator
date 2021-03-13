@@ -58,7 +58,7 @@ debug = False
 def mixer(file1, file2, level1=0, level2=0):
     if debug:
         print("In mixer()...")
-        print(file1, file2)
+        print("file1: ", file1, "file2: ", file2)
 
     speech = AudioSegment.from_file(file1, format="mp3") + level1
     bkgrnd = AudioSegment.from_file(file2, format="wav") + level2
