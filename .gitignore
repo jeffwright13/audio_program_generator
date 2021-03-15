@@ -1,6 +1,7 @@
 *.txt
 !phrases.txt
 *.mp3
+*.wav
 *.xml
 *.html
 *.log
