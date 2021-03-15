@@ -1,14 +1,14 @@
-Let's do some qi gong!;2
-Relax your body;30
-Relax twice as much;30
+Ready For Some Qi Gong?;2
+Relax Your Body;30
+Relax Twice as Much;30
 Great Tai Chi Circle;60
 Hugging the Buddha;60
-Flowing breeze swaying willow;60
-Lifting the sky;60
-Qi ball;60
-Shaking the tree;60
+Flowing Breeze Swaying Willow;45
+Lifting the Sky;60
+Luohan Bowing to Buddha;60
+Shaking the Tree;60
 Fireworks;60
-Flowing breeze swaying willow;60
-Flowing stillness;30
-Closing sequence;60
-Good job!;0
+Flowing Breeze Swaying Willow;45
+Flowing Stillness;30
+Closing Sequence;60
+Good Job!;0
