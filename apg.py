@@ -34,15 +34,23 @@ Usage:
     apg -h --help
 
 Options:
-    -p --play       Play program after generating.
-    -d --debug      Print debug statements to console.
+    -a --attenuation LEV    Set attenuation level of background file (non-
+                            negative number indicating dB attenuation).
+    -p --play               Play program after generating.
+    -d --debug              Print debug statements to console.
+    -V --version            Show version.
+    -h --help               Show this screen.
+
+Commands:
+    mix                     Mix files
 
 Arguments:
-    phrase_file     Name of comma-separated text file containing
-                    phrases and silence durations. Do not include
-                    commas in this file.
-    sound_file      A file to be mixed into the generated program
-                    file. Useful for background music/sounds.
+    phrase_file             Name of comma-separated text file containing
+                            phrases and silence durations. Do not include
+                            commas in this file.
+    sound_file              A file to be mixed into the generated program
+                            file. Useful for background music/sounds. Must
+                            be in .wav format.
 
 Example <phrase_file> format:
     Phrase One;2
@@ -64,10 +72,9 @@ from audioplayer import AudioPlayer
 from pydub import AudioSegment
 
 
-def mix(segment1, segment2, level1=0, level2=-12, fadein=3000, fadeout=6000):
+def mix(segment1, segment2, seg2_atten, fadein=3000, fadeout=6000):
     """
-    Mixes two pydub AudioSegments (with individual levels), then fades
-    the result in/out.
+    Mixes two pydub AudioSegments, then fades the result in/out.
     Returns mixed AudioSegment.
     """
     duration1 = len(segment1)
@@ -80,8 +87,8 @@ def mix(segment1, segment2, level1=0, level2=-12, fadein=3000, fadeout=6000):
     else:
         segment2_normalized = segment2[:duration1]
 
-    return (segment1 + level1).overlay(
-        (segment2_normalized + level2).fade_in(fadein).fade_out(fadeout)
+    return (segment1).overlay(
+        (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
     )
 
 
@@ -95,6 +102,7 @@ def gen_speech(phrase_file):
         csv_reader = reader(read_obj)
         for row in csv_reader:
             tempfile = NamedTemporaryFile().name + ".mp3"
+
             try:
                 phrase, interval = row[0].split(";")
             except Exception as e:
@@ -102,6 +110,12 @@ def gen_speech(phrase_file):
                 print(row)
                 print(e.args)
                 sys.exit()
+            if len(phrase) == 0:
+                print("Error: gTTS requires non-empty text to process.")
+                print("File: ", phrase_file)
+                print("Line number: ", csv_reader.line_num)
+                sys.exit()
+
             speech = gTTS(phrase)
             speech.save(tempfile)
             speech = AudioSegment.from_file(tempfile, format="mp3")
@@ -120,7 +134,7 @@ def main():
 
     if args["mix"]:
         bkgnd = AudioSegment.from_file(args["<sound_file>"], format="wav")
-        mixed = mix(speech, bkgnd)
+        mixed = mix(speech, bkgnd, args["--level"])
         mixed.export(save_file, format="mp3")
     else:
         speech.export(save_file, format="mp3")
