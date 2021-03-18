@@ -35,7 +35,8 @@ Usage:
 
 Options:
     -a --attenuation LEV    Set attenuation level of background file (non-
-                            negative number indicating dB attenuation).
+                            negative number indicating dB attenuation)
+                            ([default: 0]).
     -p --play               Play program after generating.
     -d --debug              Print debug statements to console.
     -V --version            Show version.
@@ -73,7 +74,7 @@ from audioplayer import AudioPlayer
 from pydub import AudioSegment
 
 
-def mix(segment1, segment2, seg2_atten, fadein=3000, fadeout=6000):
+def mix(segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
     """
     Mixes two pydub AudioSegments, then fades the result in/out.
     Returns mixed AudioSegment.
@@ -105,8 +106,8 @@ def gen_speech(phrase_file):
         csv_reader = reader(read_obj)
         num_rows = 0
         for row in csv_reader:
-            num_rows += 1
             bar.update(num_rows)
+            num_rows += 1
             tempfile = NamedTemporaryFile().name + ".mp3"
 
             try:
@@ -141,7 +142,7 @@ def main():
 
     if args["mix"]:
         bkgnd = AudioSegment.from_file(args["<sound_file>"], format="wav")
-        mixed = mix(speech, bkgnd, args["--level"])
+        mixed = mix(speech, bkgnd, args["--attenuation"])
         mixed.export(save_file, format="mp3")
     else:
         speech.export(save_file, format="mp3")
