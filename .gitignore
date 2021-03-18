@@ -1,5 +1,6 @@
 *.txt
 !phrases.txt
+!requirements.txt
 *.mp3
 *.wav
 *.xml
