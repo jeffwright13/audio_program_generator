@@ -63,6 +63,7 @@ Author:
 import os
 import sys
 import math
+import progressbar
 from tempfile import NamedTemporaryFile
 from csv import reader
 from pathlib import Path
@@ -98,9 +99,14 @@ def gen_speech(phrase_file):
     Returns Audiosegment.
     """
     with open(phrase_file, "r") as read_obj:
+        file_size = os.path.getsize(phrase_file)
+        bar = progressbar.ProgressBar(min_val=1, max_value=math.ceil(file_size / 25))
         combined = AudioSegment.empty()
         csv_reader = reader(read_obj)
+        num_rows = 0
         for row in csv_reader:
+            num_rows += 1
+            bar.update(num_rows)
             tempfile = NamedTemporaryFile().name + ".mp3"
 
             try:
@@ -110,6 +116,7 @@ def gen_speech(phrase_file):
                 print(row)
                 print(e.args)
                 sys.exit()
+
             if len(phrase) == 0:
                 print("Error: gTTS requires non-empty text to process.")
                 print("File: ", phrase_file)
@@ -127,7 +134,7 @@ def gen_speech(phrase_file):
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.2.2")
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.3.1")
     save_file = Path(args["<phrase_file>"]).stem + ".mp3"
     print(args) if args["--debug"] else None
     speech = gen_speech(args["<phrase_file>"])
