@@ -131,6 +131,7 @@ def gen_speech(phrase_file):
             os.remove(tempfile)
             silence = AudioSegment.silent(duration=1000 * int(interval))
             combined += silence
+    bar.update(num_rows)
     return combined
 
 
