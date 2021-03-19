@@ -64,7 +64,8 @@ Author:
 import os
 import sys
 import math
-import progressbar
+from progressbar import Bar, ETA, ReverseBar, ProgressBar
+from binaryornot.check import is_binary
 from tempfile import NamedTemporaryFile
 from csv import reader
 from pathlib import Path
@@ -72,6 +73,20 @@ from docopt import docopt
 from gtts import gTTS
 from audioplayer import AudioPlayer
 from pydub import AudioSegment
+
+
+def num_lines_in_file(filename):
+    """
+    Takes text filename ; returns the number of lines in a file
+    """
+    if is_binary(filename):
+        raise TypeError("Provided file, ", filename, " is binary. Must be text.")
+
+    numlines = 0
+    with open(filename, "r") as fh:
+        for row in fh:
+            numlines += 1
+    return numlines
 
 
 def mix(segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
@@ -100,8 +115,10 @@ def gen_speech(phrase_file):
     Returns Audiosegment.
     """
     with open(phrase_file, "r") as read_obj:
-        file_size = os.path.getsize(phrase_file)
-        bar = progressbar.ProgressBar(min_val=1, max_value=math.ceil(file_size / 25))
+        widgets = [Bar(">"), " ", ETA(), " ", ReverseBar("<")]
+        bar = ProgressBar(
+            widgets=widgets, maxval=num_lines_in_file(phrase_file)
+        ).start()
         combined = AudioSegment.empty()
         csv_reader = reader(read_obj)
         num_rows = 0
@@ -131,18 +148,25 @@ def gen_speech(phrase_file):
             os.remove(tempfile)
             silence = AudioSegment.silent(duration=1000 * int(interval))
             combined += silence
-    bar.update(num_rows)
+    bar.finish()
     return combined
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.3.1")
-    save_file = Path(args["<phrase_file>"]).stem + ".mp3"
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.4.0")
+    phrase_file = args["<phrase_file>"]
+    sound_file = args["<sound_file>"]
+    save_file = Path(phrase_file).stem + ".mp3"
     print(args) if args["--debug"] else None
+    if not os.path.exists(phrase_file):
+        sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
+    if args["mix"] and not os.path.exists(sound_file):
+        sys.exit("Sound file " + sound_file + " does not exist. Quitting.")
+
     speech = gen_speech(args["<phrase_file>"])
 
     if args["mix"]:
-        bkgnd = AudioSegment.from_file(args["<sound_file>"], format="wav")
+        bkgnd = AudioSegment.from_file(sound_file, format="wav")
         mixed = mix(speech, bkgnd, args["--attenuation"])
         mixed.export(save_file, format="mp3")
     else:
