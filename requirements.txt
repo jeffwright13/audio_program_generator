@@ -1,5 +1,7 @@
 audioplayer==0.6
+binaryornot==0.4.4
 docopt==0.6.2
 gTTS==2.2.2
 progressbar2==3.53.1
 pydub==0.25.1
+pyobjc==7.1

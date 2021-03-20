@@ -64,15 +64,15 @@ Author:
 import os
 import sys
 import math
-from progressbar import Bar, ETA, ReverseBar, ProgressBar
-from binaryornot.check import is_binary
 from tempfile import NamedTemporaryFile
 from csv import reader
 from pathlib import Path
+from binaryornot.check import is_binary
 from docopt import docopt
 from gtts import gTTS
 from audioplayer import AudioPlayer
 from pydub import AudioSegment
+from progressbar import ProgressBar
 
 
 def num_lines_in_file(filename):
@@ -115,15 +115,12 @@ def gen_speech(phrase_file):
     Returns Audiosegment.
     """
     with open(phrase_file, "r") as read_obj:
-        widgets = [Bar(">"), " ", ETA(), " ", ReverseBar("<")]
-        bar = ProgressBar(
-            widgets=widgets, maxval=num_lines_in_file(phrase_file)
-        ).start()
+        pbar = ProgressBar(maxval=num_lines_in_file(phrase_file)).start()
         combined = AudioSegment.empty()
         csv_reader = reader(read_obj)
         num_rows = 0
         for row in csv_reader:
-            bar.update(num_rows)
+            pbar.update(num_rows)
             num_rows += 1
             tempfile = NamedTemporaryFile().name + ".mp3"
 
@@ -148,7 +145,7 @@ def gen_speech(phrase_file):
             os.remove(tempfile)
             silence = AudioSegment.silent(duration=1000 * int(interval))
             combined += silence
-    bar.finish()
+    pbar.finish()
     return combined
 
 
