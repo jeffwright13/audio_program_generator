@@ -65,7 +65,6 @@ import os
 import sys
 import math
 from tempfile import NamedTemporaryFile
-from csv import reader
 from pathlib import Path
 from binaryornot.check import is_binary
 from docopt import docopt
@@ -114,37 +113,39 @@ def gen_speech(phrase_file):
     Generates speech from a comma-separated file.
     Returns Audiosegment.
     """
-    with open(phrase_file, "r") as read_obj:
+    with open(phrase_file, "r") as f:
         pbar = ProgressBar(maxval=num_lines_in_file(phrase_file)).start()
         combined = AudioSegment.empty()
-        csv_reader = reader(read_obj)
+        lines = f.readlines()
         num_rows = 0
-        for row in csv_reader:
+
+        for line in lines:
             pbar.update(num_rows)
             num_rows += 1
-            tempfile = NamedTemporaryFile().name + ".mp3"
 
             try:
-                phrase, interval = row[0].split(";")
+                phrase, interval = line.split(";")
             except Exception as e:
                 print("Error parsing input file as CSV:")
-                print(row)
+                print(line)
                 print(e.args)
                 sys.exit()
 
             if len(phrase) == 0:
                 print("Error: gTTS requires non-empty text to process.")
                 print("File: ", phrase_file)
-                print("Line number: ", csv_reader.line_num)
+                print("Line number: ", num_rows)
                 sys.exit()
 
             speech = gTTS(phrase)
+            tempfile = NamedTemporaryFile().name + ".mp3"
             speech.save(tempfile)
             speech = AudioSegment.from_file(tempfile, format="mp3")
             combined += speech
             os.remove(tempfile)
             silence = AudioSegment.silent(duration=1000 * int(interval))
             combined += silence
+
     pbar.finish()
     return combined
 
