@@ -1,5 +1,4 @@
 *.txt
-!phrases.txt
 !requirements.txt
 *.mp3
 *.wav
@@ -15,6 +14,8 @@
 *.zip
 *.spec
 *.vscode
+
+.cache/
 
 __pycache__/
 results/

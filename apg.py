@@ -108,7 +108,7 @@ def mix(segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
     )
 
 
-def gen_speech(phrase_file):
+def gen_speech(phrase_file, debug=False):
     """
     Generates speech from a comma-separated file.
     Returns Audiosegment.
@@ -137,12 +137,15 @@ def gen_speech(phrase_file):
                 print("Line number: ", num_rows)
                 sys.exit()
 
-            speech = gTTS(phrase)
-            tempfile = NamedTemporaryFile().name + ".mp3"
-            speech.save(tempfile)
-            speech = AudioSegment.from_file(tempfile, format="mp3")
+            print(phrase) if debug else None
+            
+            Path.mkdir(Path.cwd() / ".cache") if not Path(Path.cwd() / ".cache").exists() else None
+            file = Path.cwd() / ".cache" / (phrase + ".mp3")
+            if not Path(file).exists():
+                speech = gTTS(phrase)
+                speech.save(file)
+            speech = AudioSegment.from_file(file, format="mp3")
             combined += speech
-            os.remove(tempfile)
             silence = AudioSegment.silent(duration=1000 * int(interval))
             combined += silence
 
@@ -155,13 +158,14 @@ def main():
     phrase_file = args["<phrase_file>"]
     sound_file = args["<sound_file>"]
     save_file = Path(phrase_file).stem + ".mp3"
+    print(args)
     print(args) if args["--debug"] else None
     if not os.path.exists(phrase_file):
         sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
     if args["mix"] and not os.path.exists(sound_file):
         sys.exit("Sound file " + sound_file + " does not exist. Quitting.")
 
-    speech = gen_speech(args["<phrase_file>"])
+    speech = gen_speech(args["<phrase_file>"], args["--debug"])
 
     if args["mix"]:
         bkgnd = AudioSegment.from_file(sound_file, format="wav")
