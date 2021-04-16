@@ -6,14 +6,12 @@ Generates an audio program from a text file containing English sentences
     Generate audio program of spoken phrases, with optional background
     sound file mixed in.
 
-    User populates a comma-separated text file with plain-text phrases,
+    User populates a semicolon-separated text file with plain-text phrases,
     each followed by an inter-phrase duration. Each line of the file is
     comprised of:
       - one phrase to be spoken
-      - a comma
+      - a semicolon
       - a silence duration (specified in seconds)
-    Obviously, do not include superfluous commas in this file. An exception
-    will occur if you do.
 
     The script generates and saves a single MP3 file. The base name of the MP3
     file is the same as the specified input file. So, for example, if the
@@ -26,7 +24,7 @@ Generates an audio program from a text file containing English sentences
     in duration than the generated speech file, it will be looped. If it is
     longer, it will be truncated. The resulting background sound (looped or
     not) will be faded in and out to ensure a smooth transition. Currently,
-    only .wav files are supported.
+    only .wav files are supported as inputs.
 
 # Usage:
     apg [options] <phrase_file>
@@ -35,8 +33,8 @@ Generates an audio program from a text file containing English sentences
     apg -h --help
 
 # Options:
-    -a --attenuation LEV    Set attenuation level of background file (non-
-                            negative number indicating dB attenuation).
+    -a --attenuation LEVEL  Set attenuation level of background file (non-
+                            negative number, indicating dB attenuation).
     -p --play               Play program after generating.
     -d --debug              Print debug statements to console.
     -V --version            Show version.
