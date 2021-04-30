@@ -2,29 +2,29 @@
 Generates an audio program from a text file containing English sentences
 
 # Description:
-    apg.py:
-    Generate audio program of spoken phrases, with optional background
-    sound file mixed in.
+apg.py:
+Generate audio program of spoken phrases, with optional background
+sound file mixed in.
 
-    User populates a semicolon-separated text file with plain-text phrases,
-    each followed by an inter-phrase duration. Each line of the file is
-    comprised of:
-      - one phrase to be spoken
-      - a semicolon
-      - a silence duration (specified in seconds)
+User populates a semicolon-separated text file with plain-text phrases,
+each followed by an inter-phrase duration. Each line of the file is
+comprised of:
+  - one phrase to be spoken
+  - a semicolon
+  - a silence duration (specified in seconds)
 
-    The script generates and saves a single MP3 file. The base name of the MP3
-    file is the same as the specified input file. So, for example, if the
-    script is given input file "phrases.txt", the output file will be
-    "phrases.mp3".
+The script generates and saves a single MP3 file. The base name of the MP3
+file is the same as the specified input file. So, for example, if the
+script is given input file "phrases.txt", the output file will be
+"phrases.mp3".
 
-    The "mix" command is used to mix in background sounds. This command takes
-    an extra parameter, the path/filename of a sound file to be mixed in with
-    the speech file generated from the phrase file. If the sound file is shorter
-    in duration than the generated speech file, it will be looped. If it is
-    longer, it will be truncated. The resulting background sound (looped or
-    not) will be faded in and out to ensure a smooth transition. Currently,
-    only .wav files are supported as inputs.
+The "mix" command is used to mix in background sounds. This command takes
+an extra parameter, the path/filename of a sound file to be mixed in with
+the speech file generated from the phrase file. If the sound file is shorter
+in duration than the generated speech file, it will be looped. If it is
+longer, it will be truncated. The resulting background sound (looped or
+not) will be faded in and out to ensure a smooth transition. Currently,
+only .wav files are supported as inputs.
 
 # Usage:
     apg [options] <phrase_file>
@@ -57,4 +57,4 @@ Generates an audio program from a text file containing English sentences
     Phrase Three;0
 
 # Author:
-    Jeff Wright <jeff.washcloth@gmail.com>
+Jeff Wright <jeff.washcloth@gmail.com>
