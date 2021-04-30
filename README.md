@@ -44,7 +44,7 @@ only .wav files are supported as inputs.
     mix                     Mix files
 
 # Arguments:
-    phrase_file             Name of comma-separated text file containing
+    phrase_file             Name of semicolon-separated text file containing
                             phrases and silence durations. Do not include
                             commas in this file.
     sound_file              A file to be mixed into the generated program
