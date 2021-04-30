@@ -4,13 +4,13 @@ Description:
     Generate audio program of spoken phrases, with optional background
     sound file mixed in.
 
-    User populates a comma-separated text file with plain-text phrases,
+    User populates a semicolon-separated text file with plain-text phrases,
     each followed by an inter-phrase duration. Each line of the file is
     comprised of:
       - one phrase to be spoken
-      - a comma
+      - a semicolon
       - a silence duration (specified in seconds)
-    Obviously, do not include superfluous commas in this file. An exception
+    Obviously, do not include superfluous semicolons in this file. An exception
     will occur if you do.
 
     The script generates and saves a single MP3 file. The base name of the MP3
@@ -46,9 +46,8 @@ Commands:
     mix                     Mix files
 
 Arguments:
-    phrase_file             Name of comma-separated text file containing
-                            phrases and silence durations. Do not include
-                            commas in this file.
+    phrase_file             Name of semicolon-separated text file containing
+                            phrases and silence durations.
     sound_file              A file to be mixed into the generated program
                             file. Useful for background music/sounds. Must
                             be in .wav format.
@@ -110,7 +109,7 @@ def mix(segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
 
 def gen_speech(phrase_file, debug=False):
     """
-    Generates speech from a comma-separated file.
+    Generates speech from a semicolon-separated file.
     Returns Audiosegment.
     """
     with open(phrase_file, "r") as f:
@@ -138,7 +137,7 @@ def gen_speech(phrase_file, debug=False):
                 sys.exit()
 
             print(phrase) if debug else None
-            
+
             Path.mkdir(Path.cwd() / ".cache") if not Path(Path.cwd() / ".cache").exists() else None
             file = Path.cwd() / ".cache" / (phrase + ".mp3")
             if not Path(file).exists():
