@@ -157,7 +157,6 @@ def main():
     phrase_file = args["<phrase_file>"]
     sound_file = args["<sound_file>"]
     save_file = Path(phrase_file).stem + ".mp3"
-    print(args)
     print(args) if args["--debug"] else None
     if not os.path.exists(phrase_file):
         sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
