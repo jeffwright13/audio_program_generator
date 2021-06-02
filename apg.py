@@ -60,12 +60,9 @@ Example <phrase_file> format:
 Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
-import os
 import sys
 import math
-from tempfile import NamedTemporaryFile
 from pathlib import Path
-from binaryornot.check import is_binary
 from docopt import docopt
 from gtts import gTTS
 from audioplayer import AudioPlayer
@@ -73,104 +70,133 @@ from pydub import AudioSegment
 from progressbar import ProgressBar
 
 
-def num_lines_in_file(filename):
+def num_lines_in_file(filename: Path) -> int:
     """
     Takes text filename ; returns the number of lines in a file
     """
-    if is_binary(filename):
-        raise TypeError("Provided file, ", filename, " is binary. Must be text.")
-
-    numlines = 0
-    with open(filename, "r") as fh:
-        for row in fh:
-            numlines += 1
+    numlines = 1
+    with open(filename, "r"):
+        numlines += 1
     return numlines
 
 
-def mix(segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
-    """
-    Mixes two pydub AudioSegments, then fades the result in/out.
-    Returns mixed AudioSegment.
-    """
-    duration1 = len(segment1)
-    duration2 = len(segment2)
+class Apg:
+    def __init__(
+        self,
+        phrase_file: Path,
+        to_mix: bool = False,
+        sound_file: Path = None,
+        attenuation: int = 0,
+    ):
+        """Initialize class instance"""
+        self.phrase_file = phrase_file  # Input file to generate speech segments
+        self.speech_file = None  # Generated speech/silence
+        self.mix_file = None  # Mixed speeech/sound
+        self.to_mix = to_mix  # Specifies if mixing will take place
+        self.sound_file = sound_file  # File with which to mix generated speech
+        self.attenuation = attenuation  # Attenuation value, if mixing
+        self.save_file = str(phrase_file.parent / phrase_file.stem) + ".mp3"
 
-    if duration1 > duration2:
-        times = math.ceil(duration1 / duration2)
-        segment2_normalized = segment2 * times
-        segment2_normalized = segment2_normalized[:duration1]
-    else:
-        segment2_normalized = segment2[:duration1]
+    def gen_speech(self):
+        """Generate a combined speech file, made up of gTTS-generated speech
+        snippets from each line in the phrase_file + corresponding silence."""
 
-    return (segment1).overlay(
-        (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
-    )
+        with open(self.phrase_file, "r") as f:
+            pbar = ProgressBar(maxval=num_lines_in_file(self.phrase_file)).start()
+            combined = AudioSegment.empty()
+            lines = f.readlines()
 
+            for line in lines:
+                pbar.update()
 
-def gen_speech(phrase_file, debug=False):
-    """
-    Generates speech from a semicolon-separated file.
-    Returns Audiosegment.
-    """
-    with open(phrase_file, "r") as f:
-        pbar = ProgressBar(maxval=num_lines_in_file(phrase_file)).start()
-        combined = AudioSegment.empty()
-        lines = f.readlines()
-        num_rows = 0
+                try:
+                    phrase, interval = line.split(";")
+                except Exception as e:
+                    print("Error parsing input file as CSV:")
+                    print(line)
+                    print(e.args)
+                    sys.exit()
 
-        for line in lines:
-            pbar.update(num_rows)
-            num_rows += 1
+                if len(phrase) == 0:
+                    print("Error: gTTS requires non-empty text to process.")
+                    print("File: ", self.phrase_file)
+                    print("Line number: ", num_rows)
+                    sys.exit()
 
-            try:
-                phrase, interval = line.split(";")
-            except Exception as e:
-                print("Error parsing input file as CSV:")
-                print(line)
-                print(e.args)
-                sys.exit()
+                # Each speech snippet generated from gTTS is saved locally
+                # in a cache (if that exact phrase had not already been used).
+                # Otherwise, it is simply re-used.
+                Path.mkdir(Path.cwd() / ".cache") if not Path(
+                    Path.cwd() / ".cache"
+                ).exists() else None
+                file = Path.cwd() / ".cache" / (phrase + ".mp3")
+                if not Path(file).exists():
+                    speech = gTTS(phrase)
+                    speech.save(file)
 
-            if len(phrase) == 0:
-                print("Error: gTTS requires non-empty text to process.")
-                print("File: ", phrase_file)
-                print("Line number: ", num_rows)
-                sys.exit()
+                # Add the current speech snippet + corresponding silence
+                # to the combined file, building up for each new line.
+                speech = AudioSegment.from_file(file, format="mp3")
+                combined += speech
+                silence = AudioSegment.silent(duration=1000 * int(interval))
+                combined += silence
 
-            print(phrase) if debug else None
+        pbar.finish()
+        self.speech_file = combined
 
-            Path.mkdir(Path.cwd() / ".cache") if not Path(Path.cwd() / ".cache").exists() else None
-            file = Path.cwd() / ".cache" / (phrase + ".mp3")
-            if not Path(file).exists():
-                speech = gTTS(phrase)
-                speech.save(file)
-            speech = AudioSegment.from_file(file, format="mp3")
-            combined += speech
-            silence = AudioSegment.silent(duration=1000 * int(interval))
-            combined += silence
+    def mix(self, segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
+        """
+        Mixes two pydub AudioSegments, then fades the result in/out.
+        Returns mixed AudioSegment.
+        """
+        duration1 = len(segment1)
+        duration2 = len(segment2)
 
-    pbar.finish()
-    return combined
+        if duration1 > duration2:
+            times = math.ceil(duration1 / duration2)
+            segment2_normalized = segment2 * times
+            segment2_normalized = segment2_normalized[:duration1]
+        else:
+            segment2_normalized = segment2[:duration1]
+
+        return (segment1).overlay(
+            (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
+        )
+
+    def invoke(self):
+        self.gen_speech()
+        if self.to_mix == True:
+            bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
+            self.mix_file = self.mix(self.speech_file, bkgnd, self.attenuation)
+            self.mix_file.export(self.save_file, format="mp3")
+        else:
+            self.speech_file.export(self.save_file, format="mp3")
 
 
 def main():
     args = docopt(__doc__, version="Audio Program Generator (apg) v1.4.0")
-    phrase_file = args["<phrase_file>"]
-    sound_file = args["<sound_file>"]
+
+    phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
+    sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     save_file = Path(phrase_file).stem + ".mp3"
+    to_mix = True if args["mix"] else False
+    attenuation = args["--attenuation"] if args["--attenuation"] else 0
     print(args) if args["--debug"] else None
-    if not os.path.exists(phrase_file):
+    print(phrase_file, sound_file, to_mix, attenuation, save_file)
+
+    if not phrase_file:
         sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
-    if args["mix"] and not os.path.exists(sound_file):
+    if to_mix and not sound_file:
         sys.exit("Sound file " + sound_file + " does not exist. Quitting.")
 
-    speech = gen_speech(args["<phrase_file>"], args["--debug"])
+    A = Apg(
+        phrase_file,
+        to_mix,
+        sound_file,
+        attenuation,
+    )
 
-    if args["mix"]:
-        bkgnd = AudioSegment.from_file(sound_file, format="wav")
-        mixed = mix(speech, bkgnd, args["--attenuation"])
-        mixed.export(save_file, format="mp3")
-    else:
-        speech.export(save_file, format="mp3")
+    A.invoke()
 
     if args["--play"]:
         AudioPlayer(save_file).play(block=True)
