@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "apg"
+version = "1.0.0"
+description = "Create an audio program from a text file containing English sentences"
+authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jeffwright13/audio_program_generator/"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+docopt = "^0.6.2"
+gTTS = "^2.2.2"
+progressbar2 = "^3.53.1"
+pydub = "^0.25.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
