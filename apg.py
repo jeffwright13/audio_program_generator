@@ -37,7 +37,6 @@ Options:
     -a --attenuation LEV    Set attenuation level of background file (non-
                             negative number indicating dB attenuation)
                             ([default: 0]).
-    -p --play               Play program after generating.
     -d --debug              Print debug statements to console.
     -V --version            Show version.
     -h --help               Show this screen.
@@ -65,7 +64,6 @@ import math
 from pathlib import Path
 from docopt import docopt
 from gtts import gTTS
-from audioplayer import AudioPlayer
 from pydub import AudioSegment
 from progressbar import ProgressBar
 
@@ -120,7 +118,7 @@ class Apg:
                 if len(phrase) == 0:
                     print("Error: gTTS requires non-empty text to process.")
                     print("File: ", self.phrase_file)
-                    print("Line number: ", num_rows)
+                    print("Line: ", line)
                     sys.exit()
 
                 # Each speech snippet generated from gTTS is saved locally
@@ -174,15 +172,13 @@ class Apg:
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.4.0")
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.0")
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
-    save_file = Path(phrase_file).stem + ".mp3"
     to_mix = True if args["mix"] else False
     attenuation = args["--attenuation"] if args["--attenuation"] else 0
     print(args) if args["--debug"] else None
-    print(phrase_file, sound_file, to_mix, attenuation, save_file)
 
     if not phrase_file:
         sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
@@ -197,9 +193,6 @@ def main():
     )
 
     A.invoke()
-
-    if args["--play"]:
-        AudioPlayer(save_file).play(block=True)
 
 
 if __name__ == "__main__":

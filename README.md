@@ -35,7 +35,6 @@ only .wav files are supported as inputs.
 # Options:
     -a --attenuation LEVEL  Set attenuation level of background file (non-
                             negative number, indicating dB attenuation).
-    -p --play               Play program after generating.
     -d --debug              Print debug statements to console.
     -V --version            Show version.
     -h --help               Show this screen.
