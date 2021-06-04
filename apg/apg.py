@@ -65,7 +65,7 @@ from pathlib import Path
 from docopt import docopt
 from gtts import gTTS
 from pydub import AudioSegment
-from progressbar import ProgressBar
+from tqdm import tqdm
 
 
 def num_lines_in_file(filename: Path) -> int:
@@ -100,13 +100,11 @@ class Apg:
         snippets from each line in the phrase_file + corresponding silence."""
 
         with open(self.phrase_file, "r") as f:
-            pbar = ProgressBar(maxval=num_lines_in_file(self.phrase_file)).start()
+            #pbar = ProgressBar(maxval=num_lines_in_file(self.phrase_file)).start()
             combined = AudioSegment.empty()
             lines = f.readlines()
 
-            for line in lines:
-                pbar.update()
-
+            for line in tqdm(lines):
                 try:
                     phrase, interval = line.split(";")
                 except Exception as e:
@@ -139,7 +137,6 @@ class Apg:
                 silence = AudioSegment.silent(duration=1000 * int(interval))
                 combined += silence
 
-        pbar.finish()
         self.speech_file = combined
 
     def mix(self, segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
