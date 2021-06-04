@@ -5,6 +5,16 @@ Generates an audio program from a text file containing English sentences
 * Some relatively recent version of Python (3.7+)
 * FFMPEG with at least the ability to read mp3s and wavs, and write mp3s
 
+# Installation:
+### Using pip:
+    pip install audio-program-generator
+      
+### From source:
+    https://github.com/jeffwright13/audio_program_generator.git
+    cd audio_program_generator
+    poetry build
+    apg --help
+
 # Description:
 apg.py:
 Generate audio program of spoken phrases, with optional background
