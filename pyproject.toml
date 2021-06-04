@@ -7,6 +7,9 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/jeffwright13/audio_program_generator/"
 
+[tool.poetry.scripts]
+apg = "audio_program_generator.apg:main"
+
 [tool.poetry.dependencies]
 python = "^3.7"
 docopt = "^0.6.2"
