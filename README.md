@@ -1,4 +1,4 @@
-# audio_program_generator
+# apg (audio_program_generator)
 Generates an audio program from a text file containing English sentences
 
 # Prerequisites
