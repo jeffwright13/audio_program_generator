@@ -69,13 +69,13 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
-def parse_textfile(filename: str="") -> list:
-    def clean(input: str="") -> str:
+def parse_textfile(filename: str = "") -> list:
+    def clean(input: str = "") -> str:
         cleaner = r"[^A-Za-z0-9\s;\v]"
         clean = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
-        return re.sub(clean, '', input)
+        return re.sub(clean, "", input)
 
-    def capture(cleaned: str="") -> list:
+    def capture(cleaned: str = "") -> list:
         capturer = r"^\s*([\w\s]+?)\s*;\s*(\d+)\s*$"
         captured = re.compile(capturer, flags=re.MULTILINE | re.UNICODE)
         return re.findall(captured, cleaned)
@@ -87,7 +87,7 @@ def parse_textfile(filename: str="") -> list:
     return capture(clean(contents))
 
 
-class Apg:
+class AudioProgramGenerator:
     def __init__(
         self,
         phrase_file: Path,
@@ -165,7 +165,7 @@ class Apg:
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.0")
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.1")
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
@@ -178,7 +178,7 @@ def main():
     if to_mix and not sound_file:
         sys.exit("Sound file " + sound_file + " does not exist. Quitting.")
 
-    A = Apg(
+    A = AudioProgramGenerator(
         phrase_file,
         to_mix,
         sound_file,
