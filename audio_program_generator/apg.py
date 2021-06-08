@@ -112,8 +112,9 @@ class AudioProgramGenerator:
 
         for phrase, duration in tqdm(parse_textfile(self.phrase_file)):
 
-            # gTTS throws exception if given nothin-string
-            if phrase.strip() == "":
+            # gTTS throws exception if given nothing-string, so if we see that,
+            # skip the line
+            if not phrase.strip():
                 continue
 
             # Cache genearted gTTTS snippets and reuse if already present
