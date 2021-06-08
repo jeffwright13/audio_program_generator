@@ -59,6 +59,7 @@ Example <phrase_file> format:
 Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
+import re
 import sys
 import math
 from pathlib import Path
@@ -68,17 +69,25 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
-def num_lines_in_file(filename: Path) -> int:
-    """
-    Takes text filename ; returns the number of lines in a file
-    """
-    numlines = 1
-    with open(filename, "r"):
-        numlines += 1
-    return numlines
+def parse_textfile(filename: str = "") -> list:
+    def clean(input: str = "") -> str:
+        cleaner = r"[^A-Za-z0-9\s;\v]"
+        clean = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
+        return re.sub(clean, "", input)
+
+    def capture(cleaned: str = "") -> list:
+        capturer = r"^\s*([\w\s]+?)\s*;\s*(\d+)\s*$"
+        captured = re.compile(capturer, flags=re.MULTILINE | re.UNICODE)
+        return re.findall(captured, cleaned)
+
+    with open(filename, "r") as fh:
+        lines = fh.readlines()
+        contents = "".join(lines)
+
+    return capture(clean(contents))
 
 
-class Apg:
+class AudioProgramGenerator:
     def __init__(
         self,
         phrase_file: Path,
@@ -99,43 +108,31 @@ class Apg:
         """Generate a combined speech file, made up of gTTS-generated speech
         snippets from each line in the phrase_file + corresponding silence."""
 
-        with open(self.phrase_file, "r") as f:
-            #pbar = ProgressBar(maxval=num_lines_in_file(self.phrase_file)).start()
-            combined = AudioSegment.empty()
-            lines = f.readlines()
+        combined = AudioSegment.empty()
 
-            for line in tqdm(lines):
-                try:
-                    phrase, interval = line.split(";")
-                except Exception as e:
-                    print("Error parsing input file as CSV:")
-                    print(line)
-                    print(e.args)
-                    sys.exit()
+        for phrase, duration in tqdm(parse_textfile(self.phrase_file)):
 
-                if len(phrase) == 0:
-                    print("Error: gTTS requires non-empty text to process.")
-                    print("File: ", self.phrase_file)
-                    print("Line: ", line)
-                    sys.exit()
+            # gTTS throws exception if given nothing-string, so if we see that,
+            # skip the line
+            if not phrase.strip():
+                continue
 
-                # Each speech snippet generated from gTTS is saved locally
-                # in a cache (if that exact phrase had not already been used).
-                # Otherwise, it is simply re-used.
-                Path.mkdir(Path.cwd() / ".cache") if not Path(
-                    Path.cwd() / ".cache"
-                ).exists() else None
-                file = Path.cwd() / ".cache" / (phrase + ".mp3")
-                if not Path(file).exists():
-                    speech = gTTS(phrase)
-                    speech.save(file)
+            # Cache genearted gTTTS snippets and reuse if already present
+            Path.mkdir(Path.cwd() / ".cache") if not Path(
+                Path.cwd() / ".cache"
+            ).exists() else None
 
-                # Add the current speech snippet + corresponding silence
-                # to the combined file, building up for each new line.
-                speech = AudioSegment.from_file(file, format="mp3")
-                combined += speech
-                silence = AudioSegment.silent(duration=1000 * int(interval))
-                combined += silence
+            file = Path.cwd() / ".cache" / (phrase + ".mp3")
+            if not Path(file).exists():
+                speech = gTTS(phrase)
+                speech.save(file)
+
+            # Add the current speech snippet + corresponding silence
+            # to the combined file, building up for each new line.
+            speech = AudioSegment.from_file(file, format="mp3")
+            combined += speech
+            silence = AudioSegment.silent(duration=1000 * int(duration))
+            combined += silence
 
         self.speech_file = combined
 
@@ -169,7 +166,7 @@ class Apg:
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.0")
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.1")
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
@@ -182,7 +179,7 @@ def main():
     if to_mix and not sound_file:
         sys.exit("Sound file " + sound_file + " does not exist. Quitting.")
 
-    A = Apg(
+    A = AudioProgramGenerator(
         phrase_file,
         to_mix,
         sound_file,
@@ -194,4 +191,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
