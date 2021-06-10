@@ -59,6 +59,7 @@ Example <phrase_file> format:
 Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
+import os
 import re
 import sys
 import math
@@ -67,6 +68,8 @@ from docopt import docopt
 from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
+
+TMP = Path(os.getenv("TMP", "/tmp"))
 
 
 def parse_textfile(filename: str = "") -> list:
@@ -104,7 +107,9 @@ class AudioProgramGenerator:
         self.sound_file = sound_file  # File with which to mix generated speech
         self.attenuation = attenuation  # Attenuation value, if mixing
         self.save_file = str(phrase_file.parent / phrase_file.stem) + ".mp3"
-        self.cache = cache
+        self.cache = TMP / ".cache"
+        if not self.cache.exists():
+            self.cache.mkdir()
 
     def gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -120,15 +125,10 @@ class AudioProgramGenerator:
                 continue
 
             # Cache genearted gTTTS snippets and reuse if already present
-            if self.cache:
-                Path.mkdir(Path.cwd() / ".cache") if not Path(
-                    Path.cwd() / ".cache"
-                ).exists() else None
-
-                file = Path.cwd() / ".cache" / (phrase + ".mp3")
-                if not Path(file).exists():
-                    speech = gTTS(phrase)
-                    speech.save(file)
+            file = self.cache / (phrase + ".mp3")
+            if not Path(file).exists():
+                speech = gTTS(phrase)
+                speech.save(file)
 
             # Add the current speech snippet + corresponding silence
             # to the combined file, building up for each new line.
