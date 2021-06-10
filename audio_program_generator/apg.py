@@ -97,7 +97,6 @@ class AudioProgramGenerator:
         to_mix: bool = False,
         sound_file: Path = None,
         attenuation: int = 0,
-        cache: bool = False,
     ):
         """Initialize class instance"""
         self.phrase_file = phrase_file  # Input file to generate speech segments
