@@ -94,6 +94,7 @@ class AudioProgramGenerator:
         to_mix: bool = False,
         sound_file: Path = None,
         attenuation: int = 0,
+        cache: bool = False,
     ):
         """Initialize class instance"""
         self.phrase_file = phrase_file  # Input file to generate speech segments
@@ -103,6 +104,7 @@ class AudioProgramGenerator:
         self.sound_file = sound_file  # File with which to mix generated speech
         self.attenuation = attenuation  # Attenuation value, if mixing
         self.save_file = str(phrase_file.parent / phrase_file.stem) + ".mp3"
+        self.cache = cache
 
     def gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -118,14 +120,15 @@ class AudioProgramGenerator:
                 continue
 
             # Cache genearted gTTTS snippets and reuse if already present
-            Path.mkdir(Path.cwd() / ".cache") if not Path(
-                Path.cwd() / ".cache"
-            ).exists() else None
+            if self.cache:
+                Path.mkdir(Path.cwd() / ".cache") if not Path(
+                    Path.cwd() / ".cache"
+                ).exists() else None
 
-            file = Path.cwd() / ".cache" / (phrase + ".mp3")
-            if not Path(file).exists():
-                speech = gTTS(phrase)
-                speech.save(file)
+                file = Path.cwd() / ".cache" / (phrase + ".mp3")
+                if not Path(file).exists():
+                    speech = gTTS(phrase)
+                    speech.save(file)
 
             # Add the current speech snippet + corresponding silence
             # to the combined file, building up for each new line.
