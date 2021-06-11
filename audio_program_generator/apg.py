@@ -62,6 +62,7 @@ Author:
 import re
 import sys
 import math
+from io import BytesIO
 from pathlib import Path
 from docopt import docopt
 from gtts import gTTS
@@ -112,35 +113,36 @@ class AudioProgramGenerator:
 
         for phrase, duration in tqdm(parse_textfile(self.phrase_file)):
 
-            # gTTS throws exception if given nothing-string, so if we see that,
-            # skip the line
+            # Skip blank phrases or gTTS will throw exception
             if not phrase.strip():
                 continue
 
-            # Cache genearted gTTTS snippets and reuse if already present
-            Path.mkdir(Path.cwd() / ".cache") if not Path(
-                Path.cwd() / ".cache"
-            ).exists() else None
-
-            file = Path.cwd() / ".cache" / (phrase + ".mp3")
-            if not Path(file).exists():
-                speech = gTTS(phrase)
-                speech.save(file)
+            tmpfile = BytesIO(None)
+            speech = gTTS(phrase)
+            speech.write_to_fp(tmpfile)
+            tmpfile.seek(0)
 
             # Add the current speech snippet + corresponding silence
             # to the combined file, building up for each new line.
-            speech = AudioSegment.from_file(file, format="mp3")
-            combined += speech
+            snippet = AudioSegment.from_file(tmpfile, format="mp3")
+            combined += snippet
             silence = AudioSegment.silent(duration=1000 * int(duration))
             combined += silence
 
+            tmpfile.close()
+
         self.speech_file = combined
 
-    def mix(self, segment1, segment2, seg2_atten=0, fadein=3000, fadeout=6000):
-        """
-        Mixes two pydub AudioSegments, then fades the result in/out.
-        Returns mixed AudioSegment.
-        """
+    def mix(
+        self,
+        segment1: AudioSegment,
+        segment2: AudioSegment,
+        seg2_atten: int = 0,
+        fadein: int = 3000,
+        fadeout: int = 6000,
+    ) -> AudioSegment:
+        """Mixes two pydub AudioSegments, then fades the result in/out.
+        Returns mixed AudioSegment."""
         duration1 = len(segment1)
         duration2 = len(segment2)
 
@@ -156,6 +158,8 @@ class AudioProgramGenerator:
         )
 
     def invoke(self):
+        """Generate gTTS speech snippets for each phrase; optionally mix with
+        background sound-file; then save resultant mp3."""
         self.gen_speech()
         if self.to_mix == True:
             bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
@@ -166,7 +170,7 @@ class AudioProgramGenerator:
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.5.1")
+    args = docopt(__doc__, version="Audio Program Generator (apg) v1.6.0")
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
