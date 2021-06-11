@@ -26,6 +26,14 @@ Description:
     not) will be faded in and out to ensure a smooth transition. Currently,
     only .wav files are supported.
 
+    The CLI prints out a progress bar as the phrase file is converted into gTTS
+    speech snippets. However, no progress bar is shown for the secondary mix
+    step (when the mix option is chosen). There can be a significant delay in
+    going from the end of the first stage (snippet generation) to the end of
+    the second stage (mixing), primarily because of reading in the .wav file.
+    For this reason, you may want to select a sound file for mixing that
+    is small (suggested <20MB). Otherwise, be prepared to wait.
+
 
 Usage:
     apg [options] <phrase_file>
