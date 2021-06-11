@@ -105,7 +105,7 @@ class AudioProgramGenerator:
         self.attenuation = attenuation  # Attenuation value, if mixing
         self.save_file = str(phrase_file.parent / phrase_file.stem) + ".mp3"
 
-    def gen_speech(self):
+    def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
         snippets from each line in the phrase_file + corresponding silence."""
 
@@ -133,7 +133,7 @@ class AudioProgramGenerator:
 
         self.speech_file = combined
 
-    def mix(
+    def _mix(
         self,
         segment1: AudioSegment,
         segment2: AudioSegment,
@@ -160,10 +160,10 @@ class AudioProgramGenerator:
     def invoke(self):
         """Generate gTTS speech snippets for each phrase; optionally mix with
         background sound-file; then save resultant mp3."""
-        self.gen_speech()
-        if self.to_mix == True:
+        self._gen_speech()
+        if self.to_mix:
             bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
-            self.mix_file = self.mix(self.speech_file, bkgnd, self.attenuation)
+            self.mix_file = self._mix(self.speech_file, bkgnd, self.attenuation)
             self.mix_file.export(self.save_file, format="mp3")
         else:
             self.speech_file.export(self.save_file, format="mp3")
