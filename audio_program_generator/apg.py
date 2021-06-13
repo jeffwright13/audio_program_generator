@@ -13,7 +13,7 @@ Description:
     Obviously, do not include superfluous semicolons in this file. An exception
     will occur if you do.
 
-    The script generates and saves a single MP3 file. The base name of the MP3
+    The script generates and saves a single MP3 file. The base name of the
     file is the same as the specified input file. So, for example, if the
     script is given input file "phrases.txt", the output file will be
     "phrases.mp3".
@@ -53,7 +53,8 @@ Arguments:
     phrase_file             Path/name of semicolon-separated text file
                             containing phrases and silence durations.
     sound_file              Path/name of optional wavefile to mix with the
-                            speech generated from the phrase file. Useful for background music/sounds. Must be in .wav format.
+                            speech generated from the phrase file. Useful for
+                            background music/sounds. Must be in .wav format.
 
 Example <phrase_file> format:
     Phrase One;2
@@ -177,27 +178,32 @@ def main():
 
     args = docopt(__doc__, version=f"Audio Program Generator (apg) {this_version}")
 
-    # print(args) if args["--debug"] else None
-    print(args)
+    print(args) if args["--debug"] else None
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     attenuation = args["--attenuation"] if args["--attenuation"] else 0
 
     if sound_file:
+        p = open(phrase_file, "r")
+        s = open(sound_file, "rb")
         A = AudioProgramGenerator(
-            open(phrase_file, "r"),
-            open(sound_file, "rb"),
+            p,
+            s,
             attenuation,
         )
     else:
-        A = AudioProgramGenerator(open(phrase_file, "r"))
+        p = open(phrase_file, "r")
+        A = AudioProgramGenerator(p)
 
     result = A.invoke()
 
     with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
         f.write(result.getbuffer())
     result.close()
+
+    p.close()
+    s.close() if sound_file else None
 
 
 if __name__ == "__main__":
