@@ -18,21 +18,22 @@ Description:
     script is given input file "phrases.txt", the output file will be
     "phrases.mp3".
 
-    The "mix" command is used to mix in background sounds. This command takes
-    an extra parameter, the path/filename of a sound file to be mixed in with
-    the speech file generated from the phrase file. If the sound file is shorter
-    in duration than the generated speech file, it will be looped. If it is
-    longer, it will be truncated. The resulting background sound (looped or
-    not) will be faded in and out to ensure a smooth transition. Currently,
-    only .wav files are supported.
+    Specifying the optional sound_file parameter allows the user to mix in
+    background sounds. This parameter represents the path/filename of a sound
+    ile to be mixed in with the speech file generated from the phrase file. If
+    the sound file is shorter in duration than the generated speech file, it
+    will be looped. If it is longer, it will be truncated. The resulting
+    background sound (looped or  not) will be faded in and out to ensure a
+    smooth transition. Currently, only .wav files are supported.
 
     The CLI prints out a progress bar as the phrase file is converted into gTTS
     speech snippets. However, no progress bar is shown for the secondary mix
-    step (when the mix option is chosen). There can be a significant delay in
-    going from the end of the first stage (snippet generation) to the end of
-    the second stage (mixing), primarily because of reading in the .wav file.
-    For this reason, you may want to select a sound file for mixing that
-    is small (suggested <20MB). Otherwise, be prepared to wait.
+    step (when the optional sound_file parameter is specified). There can be a
+    significant delay in going from the end of the first stage (snippet
+    generation) to the end of the second stage (mixing), primarily because of
+    reading in the .wav file. For this reason, you may want to select a sound
+    file for mixing that is small (suggested <20MB). Otherwise, be prepared to
+    wait.
 
 
 Usage:
@@ -52,7 +53,8 @@ Arguments:
     phrase_file             Name of semicolon-separated text file containing
                             phrases and silence durations.
     sound_file              Optional file to mix with the speech generated
-                            from the phrase file. Useful for background music / sounds. Must be in .wav format.
+                            from the phrase file. Useful for background music /
+                            sounds. Must be in .wav format.
 
 Example <phrase_file> format:
     Phrase One;2
@@ -99,7 +101,7 @@ class AudioProgramGenerator:
         attenuation: int = 0,
     ):
         """Initialize class instance"""
-        self.phrase_file = phrase_file  # Input file to generate speech segments
+        self.phrase_file = phrase_file  # File to generate speech segments
         self.sound_file = sound_file  # File with which to mix generated speech
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
