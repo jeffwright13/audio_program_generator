@@ -13,7 +13,7 @@ Description:
     Obviously, do not include superfluous semicolons in this file. An exception
     will occur if you do.
 
-    The script generates and saves a single MP3 file. The base name of the MP3
+    The script generates and saves a single MP3 file. The base name of the
     file is the same as the specified input file. So, for example, if the
     script is given input file "phrases.txt", the output file will be
     "phrases.mp3".
@@ -50,11 +50,11 @@ Options:
     -h --help               Show this screen.
 
 Arguments:
-    phrase_file             Name of semicolon-separated text file containing
-                            phrases and silence durations.
-    sound_file              Optional file to mix with the speech generated
-                            from the phrase file. Useful for background music /
-                            sounds. Must be in .wav format.
+    phrase_file             Path/name of semicolon-separated text file
+                            containing phrases and silence durations.
+    sound_file              Path/name of optional wavefile to mix with the
+                            speech generated from the phrase file. Useful for
+                            background music/sounds. Must be in .wav format.
 
 Example <phrase_file> format:
     Phrase One;2
@@ -65,9 +65,9 @@ Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
 import re
-import sys
 import math
-from io import BytesIO
+import pkg_resources
+from io import StringIO, BytesIO
 from pathlib import Path
 from docopt import docopt
 from gtts import gTTS
@@ -75,7 +75,9 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
-def parse_textfile(filename: str = "") -> list:
+def parse_textfile(phrase_file_contents: str = "") -> list:
+    """Clean up user-supplied phrase file to comform with expected format"""
+
     def clean(input: str = "") -> str:
         cleaner = r"[^A-Za-z0-9\s;\v]"
         clean = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
@@ -86,27 +88,23 @@ def parse_textfile(filename: str = "") -> list:
         captured = re.compile(capturer, flags=re.MULTILINE | re.UNICODE)
         return re.findall(captured, cleaned)
 
-    with open(filename, "r") as fh:
-        lines = fh.readlines()
-        contents = "".join(lines)
-
-    return capture(clean(contents))
+    return capture(clean(phrase_file_contents))
 
 
 class AudioProgramGenerator:
     def __init__(
         self,
-        phrase_file: Path,
-        sound_file: Path = None,
+        phrase_file: StringIO,
+        sound_file: BytesIO = None,
         attenuation: int = 0,
     ):
         """Initialize class instance"""
-        self.phrase_file = phrase_file  # File to generate speech segments
-        self.sound_file = sound_file  # File with which to mix generated speech
+        self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
+        self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.attenuation = attenuation  # Attenuation value, if mixing
-        self.save_file = str(phrase_file.parent / phrase_file.stem) + ".mp3"
+        self.result = BytesIO(None)  # File-like object to store final result
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -160,20 +158,25 @@ class AudioProgramGenerator:
             (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
         )
 
-    def invoke(self):
+    def invoke(self) -> BytesIO:
         """Generate gTTS speech snippets for each phrase; optionally mix with
         background sound-file; then save resultant mp3."""
         self._gen_speech()
+
         if self.sound_file:
             bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
             self.mix_file = self._mix(self.speech_file, bkgnd, self.attenuation)
-            self.mix_file.export(self.save_file, format="mp3")
+            self.mix_file.export(self.result, format="mp3")
         else:
-            self.speech_file.export(self.save_file, format="mp3")
+            self.speech_file.export(self.result, format="mp3")
+
+        return self.result
 
 
 def main():
-    args = docopt(__doc__, version="Audio Program Generator (apg) v1.6.0")
+    this_version = pkg_resources.get_distribution("audio_program_generator").version
+
+    args = docopt(__doc__, version=f"Audio Program Generator (apg) {this_version}")
 
     print(args) if args["--debug"] else None
 
@@ -181,16 +184,26 @@ def main():
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     attenuation = args["--attenuation"] if args["--attenuation"] else 0
 
-    if not phrase_file:
-        sys.exit("Phrase file " + phrase_file + " does not exist. Quitting.")
+    if sound_file:
+        p = open(phrase_file, "r")
+        s = open(sound_file, "rb")
+        A = AudioProgramGenerator(
+            p,
+            s,
+            attenuation,
+        )
+    else:
+        p = open(phrase_file, "r")
+        A = AudioProgramGenerator(p)
 
-    A = AudioProgramGenerator(
-        phrase_file,
-        sound_file,
-        attenuation,
-    )
+    result = A.invoke()
 
-    A.invoke()
+    with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
+        f.write(result.getbuffer())
+    result.close()
+
+    p.close()
+    s.close() if sound_file else None
 
 
 if __name__ == "__main__":
