@@ -93,20 +93,17 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
 
 class AudioProgramGenerator:
-    def __init__(
-        self,
-        phrase_file: StringIO,
-        sound_file: BytesIO = None,
-        **kwargs
-    ):
+    def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **kwargs):
         """Initialize class instance"""
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
+        self.slow = kwargs.pop(
+            "slow", False
+        )  # gTTS will generate half-speed speech if this is True
+        self.attenuation = kwargs.pop("attenuation", 10)  # Attenuation value, if mixing
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
-        self.slow = kwargs.pop("slow", False)  # gTTS will generate half-speed speech if this is True
-        self.attenuation = kwargs.pop("attenuation", 10)  # Attenuation value, if mixing
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -187,14 +184,12 @@ def main():
     slow = bool(args["--slow"])
     attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
 
-    kwargs = dict(
-        slow=slow,
-        attenuation=attenuation)
+    kwargs = dict(slow=slow, attenuation=attenuation)
 
     pfile, sfile = None, None
     try:
         pfile = open(phrase_file)
-        sfile = open(sound_file, 'rb') if sound_file else None
+        sfile = open(sound_file, "rb") if sound_file else None
 
         apg = AudioProgramGenerator(pfile, sfile, **kwargs)
         result = apg.invoke()
@@ -207,7 +202,7 @@ def main():
         print(exc)
     finally:
         pfile.close()
-        sfile.close()
+        sfile.close() if sfile else None
 
 
 if __name__ == "__main__":
