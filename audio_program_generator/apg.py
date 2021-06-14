@@ -97,17 +97,16 @@ class AudioProgramGenerator:
         self,
         phrase_file: StringIO,
         sound_file: BytesIO = None,
-        attenuation: int = 0,
-        slow: bool = False,
+        **kwargs
     ):
         """Initialize class instance"""
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
-        self.attenuation = attenuation  # Attenuation value, if mixing
         self.result = BytesIO(None)  # File-like object to store final result
-        self.slow = slow  # gTTS will generate half-speed speech if this is True
+        self.slow = kwargs.pop("slow", False)  # gTTS will generate half-speed speech if this is True
+        self.attenuation = kwargs.pop("attenuation", 10)  # Attenuation value, if mixing
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -185,30 +184,30 @@ def main():
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
-    attenuation = args["--attenuation"] if args["--attenuation"] else 0
-    slow = True if args["--slow"] else False
+    slow = bool(args["--slow"])
+    attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
 
-    if sound_file:
-        pfile = open(phrase_file, "r")
-        sfile = open(sound_file, "rb")
-        A = AudioProgramGenerator(
-            pfile,
-            sfile,
-            attenuation,
-            slow,
-        )
-    else:
-        pfile = open(phrase_file, "r")
-        A = AudioProgramGenerator(pfile, slow = slow)
+    kwargs = dict(
+        slow=slow,
+        attenuation=attenuation)
 
-    result = A.invoke()
+    pfile, sfile = None, None
+    try:
+        pfile = open(phrase_file)
+        sfile = open(sound_file, 'rb') if sound_file else None
 
-    with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
-        f.write(result.getbuffer())
-    result.close()
+        apg = AudioProgramGenerator(pfile, sfile, **kwargs)
+        result = apg.invoke()
 
-    pfile.close()
-    sfile.close() if sound_file else None
+        with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
+            f.write(result.getbuffer())
+        result.close()
+    except Exception as exc:
+        # TODO: improve!
+        print(exc)
+    finally:
+        pfile.close()
+        sfile.close()
 
 
 if __name__ == "__main__":
