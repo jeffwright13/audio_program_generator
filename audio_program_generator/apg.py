@@ -185,32 +185,29 @@ def main():
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     slow = bool(args["--slow"])
-    attenuation = args["--attenuation"] if args["--attenuation"] else 0
+    attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
 
     kwargs = dict(
         slow=slow,
         attenuation=attenuation)
 
-    if sound_file:
-        pfile = open(phrase_file, "r")
-        sfile = open(sound_file, "rb")
-        A = AudioProgramGenerator(
-            pfile,
-            sfile,
-            **kwargs
-        )
-    else:
-        pfile = open(phrase_file, "r")
-        A = AudioProgramGenerator(pfile, **kwargs)
+    pfile, sfile = None, None
+    try:
+        pfile = open(phrase_file)
+        sfile = open(sound_file, 'rb') if sound_file else None
 
-    result = A.invoke()
+        apg = AudioProgramGenerator(pfile, sfile, **kwargs)
+        result = apg.invoke()
 
-    with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
-        f.write(result.getbuffer())
-    result.close()
-
-    pfile.close()
-    sfile.close() if sound_file else None
+        with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
+            f.write(result.getbuffer())
+        result.close()
+    except Exception as exc:
+        # TODO: improve!
+        print(exc)
+    finally:
+        pfile.close()
+        sfile.close()
 
 
 if __name__ == "__main__":
