@@ -46,6 +46,7 @@ Options:
                             negative number indicating dB attenuation)
                             ([default: 0]).
     -d --debug              Print debug statements to console.
+    -s --slow               Generate speech at half-speed
     -V --version            Show version.
     -h --help               Show this screen.
 
@@ -97,6 +98,7 @@ class AudioProgramGenerator:
         phrase_file: StringIO,
         sound_file: BytesIO = None,
         attenuation: int = 0,
+        slow: bool = False,
     ):
         """Initialize class instance"""
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
@@ -105,6 +107,7 @@ class AudioProgramGenerator:
         self.mix_file = None  # Mixed speeech/sound
         self.attenuation = attenuation  # Attenuation value, if mixing
         self.result = BytesIO(None)  # File-like object to store final result
+        self.slow = slow  # gTTS will generate half-speed speech if this is True
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -119,7 +122,7 @@ class AudioProgramGenerator:
                 continue
 
             tmpfile = BytesIO(None)
-            speech = gTTS(phrase)
+            speech = gTTS(phrase, slow=self.slow)
             speech.write_to_fp(tmpfile)
             tmpfile.seek(0)
 
@@ -183,18 +186,20 @@ def main():
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     attenuation = args["--attenuation"] if args["--attenuation"] else 0
+    slow = True if args["--slow"] else False
 
     if sound_file:
-        p = open(phrase_file, "r")
-        s = open(sound_file, "rb")
+        pfile = open(phrase_file, "r")
+        sfile = open(sound_file, "rb")
         A = AudioProgramGenerator(
-            p,
-            s,
+            pfile,
+            sfile,
             attenuation,
+            slow,
         )
     else:
-        p = open(phrase_file, "r")
-        A = AudioProgramGenerator(p)
+        pfile = open(phrase_file, "r")
+        A = AudioProgramGenerator(pfile, slow = slow)
 
     result = A.invoke()
 
@@ -202,8 +207,8 @@ def main():
         f.write(result.getbuffer())
     result.close()
 
-    p.close()
-    s.close() if sound_file else None
+    pfile.close()
+    sfile.close() if sound_file else None
 
 
 if __name__ == "__main__":
