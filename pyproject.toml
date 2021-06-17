@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "audio_program_generator"
-version = "1.6.1"
+version = "1.6.2"
 description = "Create an audio program from a text file containing English sentences"
 authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
 license = "MIT"
