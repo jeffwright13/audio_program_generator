@@ -16,6 +16,7 @@
 *.vscode
 
 .cache/
+.DS_Store
 
 __pycache__/
 results/
@@ -24,4 +25,5 @@ bak/
 build/
 dist/
 venv/
+.venv/
 .python-version

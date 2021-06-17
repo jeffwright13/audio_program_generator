@@ -5,14 +5,16 @@ import audio_program_generator.apg as apg
 
 def test_module(capsys):
     with capsys.disabled():
-        print("\napg:", dir(apg))
         assert "main" in dir(apg)
 
 
-def test_class_methods(capsys):
+def test_all_class_methods_exist(capsys):
     with capsys.disabled():
         fh = TemporaryFile()
         A = apg.AudioProgramGenerator(fh)
-        print("\nA:", dir(A))
         assert "_gen_speech" in dir(A)
         assert "_mix" in dir(A)
+        assert "invoke" in dir(A)
+
+
+def test_class_instantiation():
