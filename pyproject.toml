@@ -1,3 +1,7 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "audio_program_generator"
 version = "1.6.2"
@@ -24,6 +28,15 @@ pylint = "^2.8.3"
 pyflakes = "^2.3.1"
 ipython = "^7.24.1"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts =   """
+                -vvv
+                -ra
+                -q
+                --html=report.html
+                --self-contained-html
+                --cov=audio_program_generator
+                --cov-report=html
+            """"
+testpaths = ["tests"]
