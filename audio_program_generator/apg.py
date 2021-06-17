@@ -173,7 +173,10 @@ class AudioProgramGenerator:
 
 
 def main():
-    this_version = pkg_resources.get_distribution("audio_program_generator").version
+    try:
+        this_version = pkg_resources.get_distribution("audio_program_generator").version
+    except:
+        this_version = "UNKNOWN"
 
     args = docopt(__doc__, version=f"Audio Program Generator (apg) {this_version}")
 
