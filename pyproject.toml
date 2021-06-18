@@ -30,13 +30,5 @@ ipython = "^7.24.1"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts =   """
-                -vvv
-                -ra
-                -q
-                --html=report.html
-                --self-contained-html
-                --cov=audio_program_generator
-                --cov-report=html
-            """"
 testpaths = ["tests"]
+addopts = "-vvv -ra -q --html=report.html --self-contained-html --cov=audio_program_generator --cov-report=html "

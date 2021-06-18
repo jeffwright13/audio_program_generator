@@ -1,4 +1,3 @@
-from pathlib import Path
 from tempfile import TemporaryFile
 import audio_program_generator.apg as apg
 
@@ -18,3 +17,4 @@ def test_all_class_methods_exist(capsys):
 
 
 def test_class_instantiation():
+    pass
