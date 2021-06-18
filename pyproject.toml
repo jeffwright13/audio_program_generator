@@ -23,6 +23,8 @@ tqdm = "^4.61.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pytest-html = "^3.1"
+pytest-cov = "^2.12"
 black = "^21.5b2"
 pylint = "^2.8.3"
 pyflakes = "^2.3.1"
