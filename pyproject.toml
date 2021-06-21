@@ -1,36 +1,11 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-name = "audio_program_generator"
-version = "1.6.2"
-description = "Create an audio program from a text file containing English sentences"
-authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-repository = "https://github.com/jeffwright13/audio_program_generator/"
-
-[tool.poetry.scripts]
-apg = "audio_program_generator.apg:main"
-
-[tool.poetry.dependencies]
-python = "^3.7"
-docopt = "^0.6.2"
-gTTS = "^2.2.2"
-pydub = "^0.25.1"
-tqdm = "^4.61.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
-pytest-html = "^3.1"
-pytest-cov = "^2.12"
-black = "^21.5b2"
-pylint = "^2.8.3"
-pyflakes = "^2.3.1"
-ipython = "^7.24.1"
+requires = [
+    "setuptools>=56",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
-addopts = "-vvv -ra -q"
+addopts = "-vvv -ra -q --html=results/report.html --self-contained-html"

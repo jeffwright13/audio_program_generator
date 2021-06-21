@@ -19,6 +19,7 @@
 .DS_Store
 
 __pycache__/
+*.egg-info/
 results/
 htmlcov/
 assets/
