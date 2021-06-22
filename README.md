@@ -16,11 +16,13 @@ The easiest way to get started is to use `pip` to install apg as a package.
 1. *(optional, but recommended)* create a virtual environment to install the package into:
 `python -m venv .venv`
 `source ./.venv/bin/activate`
-2. Install the package:
+2. Upgrade your tools:
+`$ pip install --upgrade pip setuptools`
+3. Install the package:
 `$ pip install audio-program-generator`
 Once this is done, you will have an "apg" executable available in your terminal. You can type `apg` for basic help, or `apg --help` for full instructions.
 
-An alternative is to build and install the package from source (requires [git](https://git-scm.com/) and [poetry](https://python-poetry.org/)):
+An alternative is to build and install the package from source:
 `git clone https://github.com/jeffwright13/audio_program_generator.git`
 `cd audio_program_generator`
 `poetry install`
