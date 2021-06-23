@@ -4,6 +4,10 @@ Description:
     Generate audio program of spoken phrases, with optional background
     sound file mixed in.
 
+    NOTE: the following instructions/guidelines apply to the command line
+    interface only. Refer to the README if you are importing this code
+    as a module/package.
+
     User populates a semicolon-separated text file with plain-text phrases,
     each followed by an inter-phrase duration. Each line of the file is
     comprised of:
@@ -25,6 +29,14 @@ Description:
     will be looped. If it is longer, it will be truncated. The resulting
     background sound (looped or  not) will be faded in and out to ensure a
     smooth transition. Currently, only .wav files are supported.
+
+    Other options available include an attenuation parameter (dB0 applied to
+    the mix-in sound file; a 'slow' flag, resulting slower speech; and a 'tld'
+    option, allowing the user to select one of several regional 'accents'
+    (English only). For accents, select one from the following list:
+    ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+    See https://gtts.readthedocs.io/en/v2.2.3/module.html#localized-accents
+    for full detils.
 
     The CLI prints out a progress bar as the phrase file is converted into gTTS
     speech snippets. However, no progress bar is shown for the secondary mix
