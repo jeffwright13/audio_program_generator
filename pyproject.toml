@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "audio_program_generator"
-version = "1.6.2"
+version = "1.6.3"
 description = "Create an audio program from a text file containing English sentences"
 authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
 license = "MIT"

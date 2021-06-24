@@ -4,6 +4,10 @@ Description:
     Generate audio program of spoken phrases, with optional background
     sound file mixed in.
 
+    NOTE: the following instructions/guidelines apply to the command line
+    interface only. Refer to the README if you are importing this code
+    as a module/package.
+
     User populates a semicolon-separated text file with plain-text phrases,
     each followed by an inter-phrase duration. Each line of the file is
     comprised of:
@@ -20,11 +24,19 @@ Description:
 
     Specifying the optional sound_file parameter allows the user to mix in
     background sounds. This parameter represents the path/filename of a sound
-    ile to be mixed in with the speech file generated from the phrase file. If
+    file to be mixed in with the speech file generated from the phrase file. If
     the sound file is shorter in duration than the generated speech file, it
     will be looped. If it is longer, it will be truncated. The resulting
     background sound (looped or  not) will be faded in and out to ensure a
     smooth transition. Currently, only .wav files are supported.
+
+    Other options available include an attenuation parameter (dB0 applied to
+    the mix-in sound file; a 'slow' flag, resulting slower speech; and a 'tld'
+    option, allowing the user to select one of several regional 'accents'
+    (English only). For accents, select one from the following list:
+    ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+    See https://gtts.readthedocs.io/en/v2.2.3/module.html#localized-accents
+    for full detils.
 
     The CLI prints out a progress bar as the phrase file is converted into gTTS
     speech snippets. However, no progress bar is shown for the secondary mix
@@ -47,6 +59,7 @@ Options:
                             ([default: 0]).
     -d --debug              Print debug statements to console.
     -s --slow               Generate speech at half-speed
+    -t --tld TLD            Top level domain (for regional accents)
     -V --version            Show version.
     -h --help               Show this screen.
 
@@ -75,6 +88,8 @@ from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
 
+TLDs = ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+
 
 def parse_textfile(phrase_file_contents: str = "") -> list:
     """Clean up user-supplied phrase file to comform with expected format"""
@@ -101,6 +116,7 @@ class AudioProgramGenerator:
             "slow", False
         )  # gTTS will generate half-speed speech if this is True
         self.attenuation = kwargs.pop("attenuation", 10)  # Attenuation value, if mixing
+        self.tld = kwargs.pop("tld", "com")  # TLD for accents
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
@@ -118,7 +134,7 @@ class AudioProgramGenerator:
                 continue
 
             tmpfile = BytesIO(None)
-            speech = gTTS(phrase, slow=self.slow)
+            speech = gTTS(phrase, slow=self.slow, tld=self.tld)
             speech.write_to_fp(tmpfile)
             tmpfile.seek(0)
 
@@ -186,8 +202,11 @@ def main():
     sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
     slow = bool(args["--slow"])
     attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
+    tld = str(args["--tld"]) if args["--tld"] else "com"
+    tld = tld if tld in TLDs else "com"
+    print("tld:", tld)
 
-    kwargs = dict(slow=slow, attenuation=attenuation)
+    kwargs = dict(slow=slow, attenuation=attenuation, tld=tld)
 
     pfile, sfile = None, None
     try:
@@ -197,8 +216,10 @@ def main():
         apg = AudioProgramGenerator(pfile, sfile, **kwargs)
         result = apg.invoke()
 
-        with open(str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb") as f:
-            f.write(result.getbuffer())
+        with open(
+            str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb"
+        ) as result_file:
+            result_file.write(result.getbuffer())
         result.close()
     except Exception as exc:
         # TODO: improve!
