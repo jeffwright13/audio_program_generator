@@ -28,3 +28,5 @@ dist/
 venv/
 .venv/
 .python-version
+*.sublime*
+*.egg-info*
