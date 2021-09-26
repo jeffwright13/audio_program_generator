@@ -120,6 +120,7 @@ class AudioProgramGenerator:
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
+        self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -127,7 +128,8 @@ class AudioProgramGenerator:
 
         combined = AudioSegment.empty()
 
-        for phrase, duration in tqdm(parse_textfile(self.phrase_file)):
+        for phrase, duration in tqdm(parse_textfile(self.phrase_file),
+                                     disable=self.hide_progress_bar):
 
             # Skip blank phrases or gTTS will throw exception
             if not phrase.strip():
