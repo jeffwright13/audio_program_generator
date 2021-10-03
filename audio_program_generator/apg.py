@@ -45,7 +45,7 @@ Description:
     generation) to the end of the second stage (mixing), primarily because of
     reading in the .wav file. For this reason, you may want to select a sound
     file for mixing that is small (suggested <20MB). Otherwise, be prepared to
-    wait.
+    wait. The progress bar may be disabled with the -n option.
 
 
 Usage:
@@ -58,8 +58,10 @@ Options:
                             negative number indicating dB attenuation)
                             ([default: 0]).
     -d --debug              Print debug statements to console.
-    -s --slow               Generate speech at half-speed
-    -t --tld TLD            Top level domain (for regional accents)
+    -s --slow               Generate speech at half-speed.
+    -t --tld TLD            Top level domain (for regional accents); choose one:
+                            ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+       --hide-progress-bar  Do not display progress bar during execution.
     -V --version            Show version.
     -h --help               Show this screen.
 
@@ -120,7 +122,7 @@ class AudioProgramGenerator:
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
-        self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
+        self.hide_progress_bar = kwargs.get("hideprogbar", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -128,8 +130,9 @@ class AudioProgramGenerator:
 
         combined = AudioSegment.empty()
 
-        for phrase, duration in tqdm(parse_textfile(self.phrase_file),
-                                     disable=self.hide_progress_bar):
+        for phrase, duration in tqdm(
+            parse_textfile(self.phrase_file), disable=self.hide_progress_bar
+        ):
 
             # Skip blank phrases or gTTS will throw exception
             if not phrase.strip():
@@ -206,9 +209,9 @@ def main():
     attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
     tld = str(args["--tld"]) if args["--tld"] else "com"
     tld = tld if tld in TLDs else "com"
-    print("tld:", tld)
+    hideprogbar = bool(args["--hide-progress-bar"])
 
-    kwargs = dict(slow=slow, attenuation=attenuation, tld=tld)
+    kwargs = dict(slow=slow, attenuation=attenuation, tld=tld, hideprogbar=hideprogbar)
 
     pfile, sfile = None, None
     try:
