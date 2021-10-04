@@ -82,13 +82,13 @@ Author:
 """
 import re
 import math
-import pkg_resources
 from io import StringIO, BytesIO
 from pathlib import Path
 from docopt import docopt
 from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
+from single_source import get_version
 
 TLDs = ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
 
@@ -114,15 +114,13 @@ class AudioProgramGenerator:
         """Initialize class instance"""
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
-        self.slow = kwargs.pop(
-            "slow", False
-        )  # gTTS will generate half-speed speech if this is True
-        self.attenuation = kwargs.pop("attenuation", 10)  # Attenuation value, if mixing
-        self.tld = kwargs.pop("tld", "com")  # TLD for accents
+        self.slow = kwargs.get("slow", False)  # Half-speed speech if True
+        self.attenuation = kwargs.get("attenuation", 10)  # Attenuation value, if mixing
+        self.tld = kwargs.get("tld", "com")  # TLD for accents
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
-        self.hide_progress_bar = kwargs.get("hideprogbar", False)
+        self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -194,13 +192,8 @@ class AudioProgramGenerator:
 
 
 def main():
-    try:
-        this_version = pkg_resources.get_distribution("audio_program_generator").version
-    except:
-        this_version = "UNKNOWN"
-
-    args = docopt(__doc__, version=f"Audio Program Generator (apg) {this_version}")
-
+    __version__ = get_version(__name__, Path(__file__).parent.parent)
+    args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
     print(args) if args["--debug"] else None
 
     phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
@@ -209,9 +202,11 @@ def main():
     attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
     tld = str(args["--tld"]) if args["--tld"] else "com"
     tld = tld if tld in TLDs else "com"
-    hideprogbar = bool(args["--hide-progress-bar"])
+    hide_progress_bar = bool(args["--hide-progress-bar"])
 
-    kwargs = dict(slow=slow, attenuation=attenuation, tld=tld, hideprogbar=hideprogbar)
+    kwargs = dict(
+        slow=slow, attenuation=attenuation, tld=tld, hide_progress_bar=hide_progress_bar
+    )
 
     pfile, sfile = None, None
     try:
