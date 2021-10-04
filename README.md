@@ -29,7 +29,7 @@ Possible use cases:
     - `git clone https://github.com/jeffwright13/audio_program_generator.git`
     - `cd audio_program_generator`
 - Install the dependencies using poetry, and activate the virtual environment:
-    - `poetry install`
+    - `poetry install --no-dev`
     - `poetry shell`
 - Once this is done, you will have an "apg" executable available in your terminal. You can type `apg` for basic help, or `apg --help` for full instructions.
 - Exit the poetry virtual environment when finished:
