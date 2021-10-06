@@ -81,10 +81,12 @@ Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
 import re
+import os
 import math
+
+from dotenv import load_dotenv
 from io import StringIO, BytesIO
 from pathlib import Path
-from docopt import docopt
 from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
@@ -108,19 +110,62 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
     return capture(clean(phrase_file_contents))
 
+def get_options() -> dict:
+    """
+    Load environment variables from .env file; return keys, values as dictionary.
+    """
+    options, options_dict = ["phrase_file", "sound_file", "attenuation", "slow", "tld", "hide_progress_bar"], {}
+
+    load_dotenv(verbose=True)
+
+    phrase_file = (
+        Path(os.environ["APG_PHRASE_FILE"])
+        if "APG_PHRASE_FILE" in os.environ
+        else None
+    )
+    sound_file = (
+        Path(os.environ["APG_SOUND_FILE"])
+        if "APG_SOUND_FILE" in os.environ
+        else None
+    )
+    attenuation = (
+        int(os.environ["APG_ATTENUATION"].strip())
+        if "APG_ATTENUATION" in os.environ
+        else 0
+    )
+    slow = (
+        bool(os.environ["APG_SLOW_SPEECH"])
+        if "APG_SLOW_SPEECH" in os.environ
+        else False
+    )
+    tld = (
+        str(os.environ["APG_TLD"])
+        if "APG_TLD" in os.environ
+        else "com"
+    )
+    hide_progress_bar = (
+        bool(os.environ["APG_HIDE_PROGRESS_BAR"])
+        if "APG_HIDE_PROGRESS_BAR" in os.environ
+        else False
+    )
+
+    for option in options:
+        options_dict[option] = eval(option)
+    return options_dict
+
 
 class AudioProgramGenerator:
-    def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **kwargs):
+    def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **options):
         """Initialize class instance"""
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
-        self.slow = kwargs.get("slow", False)  # Half-speed speech if True
-        self.attenuation = kwargs.get("attenuation", 10)  # Attenuation value, if mixing
-        self.tld = kwargs.get("tld", "com")  # TLD for accents
+        self.slow = options.get("slow", False)  # Half-speed speech if True
+        self.attenuation = options.get("attenuation", 10)  # Attenuation value, if mixing
+        self.tld = options.get("tld", "com")  # TLD for accents
         self.speech_file = None  # Generated speech/silence
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
-        self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
+        self.hide_progress_bar = options.get("hide_progress_bar", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -193,27 +238,27 @@ class AudioProgramGenerator:
 
 def main():
     __version__ = get_version(__name__, Path(__file__).parent.parent)
-    args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
-    print(args) if args["--debug"] else None
 
-    phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
-    sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
-    slow = bool(args["--slow"])
-    attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
-    tld = str(args["--tld"]) if args["--tld"] else "com"
-    tld = tld if tld in TLDs else "com"
-    hide_progress_bar = bool(args["--hide-progress-bar"])
+    options = get_options()
 
-    kwargs = dict(
-        slow=slow, attenuation=attenuation, tld=tld, hide_progress_bar=hide_progress_bar
-    )
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("phrase_file", help="Required positional argument")
+    # parser.add_argument('sound_file', nargs='?', help="Required positional argument", default=None)
+    # parser.add_argument(
+    #     "-v",
+    #     "--version",
+    #     action="version",
+    #     version=__version__
+    # )
+    # args = parser.parse_args()
 
-    pfile, sfile = None, None
+    phrase_file = options["phrase_file"]
+    sound_file = options["sound_file"]
     try:
         pfile = open(phrase_file)
         sfile = open(sound_file, "rb") if sound_file else None
 
-        apg = AudioProgramGenerator(pfile, sfile, **kwargs)
+        apg = AudioProgramGenerator(**options)
         result = apg.invoke()
 
         with open(
@@ -225,7 +270,7 @@ def main():
         # TODO: improve!
         print(exc)
     finally:
-        pfile.close()
+        pfile.close() if pfile else None
         sfile.close() if sfile else None
 
 

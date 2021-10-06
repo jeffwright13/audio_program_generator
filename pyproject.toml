@@ -21,6 +21,8 @@ gTTS = "^2.2.2"
 pydub = "^0.25.1"
 tqdm = "^4.61.0"
 single-source = "^0.2.0"
+argparse = "^1.4.0"
+python-dotenv = "^0.19.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
