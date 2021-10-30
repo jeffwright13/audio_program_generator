@@ -222,10 +222,9 @@ def main():
             result_file.write(result.getbuffer())
         result.close()
     except Exception as exc:
-        # TODO: improve!
         print(exc)
     finally:
-        pfile.close()
+        pfile.close() if pfile else None
         sfile.close() if sfile else None
 
 
