@@ -35,6 +35,14 @@ Possible use cases:
 - Exit the poetry virtual environment when finished:
     - `exit`
 
+## With `docker`:
+- Clone the repo and cd into the directory:
+    - `git clone https://github.com/jeffwright13/audio_program_generator.git`
+    - `cd audio_program_generator`
+- Execute `make build` (builds Docker image)
+- Execute `make run` (runs container and enters in `poetry` shell, ready to run `apg` executable
+- Results from `make run` will be available locally in the `/apgfiles` folder, even after the container is stopped
+
 ## With `flask`:
 - There is a [sister project](https://github.com/jeffwright13/apg_flask) that wraps the apg module in a bare-bones Flask app. This can be hosted locally, or in a cloud provider such as Heroku, Digital Ocean, or AWS. This method is considered experimental at the moment, and is not officially supported.
 
