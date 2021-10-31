@@ -81,6 +81,7 @@ Example <phrase_file> format:
 Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
+import os
 import re
 import math
 from io import StringIO, BytesIO
@@ -130,28 +131,46 @@ class AudioProgramGenerator:
 
         combined = AudioSegment.empty()
 
-        for phrase, duration in tqdm(
-            parse_textfile(self.phrase_file), disable=self.hide_progress_bar
-        ):
+        if self.book_mode:
+            for phrase in tqdm(
+                self.phrase_file.split(os.linesep), disable=self.hide_progress_bar
+            ):
+                # Skip blank phrases or gTTS will throw exception
+                if not phrase.strip():
+                    continue
 
-            # Skip blank phrases or gTTS will throw exception
-            if not phrase.strip():
-                continue
+                # Write gTTS snippet to temp file for later access
+                tmpfile = BytesIO(None)
+                speech = gTTS(phrase, slow=self.slow, tld=self.tld)
+                speech.write_to_fp(tmpfile)
+                tmpfile.seek(0)
 
-            # Write gTTS snippet to temp file for later access
-            tmpfile = BytesIO(None)
-            speech = gTTS(phrase, slow=self.slow, tld=self.tld)
-            speech.write_to_fp(tmpfile)
-            tmpfile.seek(0)
+                # Add the current speech snippet + corresponding silence
+                # to the combined file, building up for each new line.
+                snippet = AudioSegment.from_file(tmpfile, format="mp3")
+                combined += snippet
+                tmpfile.close()
+        else:
+            for phrase, duration in tqdm(
+                parse_textfile(self.phrase_file), disable=self.hide_progress_bar
+            ):
+                # Skip blank phrases or gTTS will throw exception
+                if not phrase.strip():
+                    continue
 
-            # Add the current speech snippet + corresponding silence
-            # to the combined file, building up for each new line.
-            snippet = AudioSegment.from_file(tmpfile, format="mp3")
-            combined += snippet
-            silence = AudioSegment.silent(duration=1000 * int(duration))
-            combined += silence
+                # Write gTTS snippet to temp file for later access
+                tmpfile = BytesIO(None)
+                speech = gTTS(phrase, slow=self.slow, tld=self.tld)
+                speech.write_to_fp(tmpfile)
+                tmpfile.seek(0)
 
-            tmpfile.close()
+                # Add the current speech snippet + corresponding silence
+                # to the combined file, building up for each new line.
+                snippet = AudioSegment.from_file(tmpfile, format="mp3")
+                combined += snippet
+                silence = AudioSegment.silent(duration=1000 * int(duration))
+                combined += silence
+                tmpfile.close()
 
         self.speech_file = combined
 
