@@ -61,6 +61,7 @@ Options:
     -s --slow               Generate speech at half-speed.
     -t --tld TLD            Top level domain (for regional accents); choose one:
                             ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+    -b --book-mode          From a plain text file, generate a reading of its contents
        --hide-progress-bar  Do not display progress bar during execution.
     -V --version            Show version.
     -h --help               Show this screen.
@@ -121,6 +122,7 @@ class AudioProgramGenerator:
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
+        self.book_mode = kwargs.get("book_mode", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -136,6 +138,7 @@ class AudioProgramGenerator:
             if not phrase.strip():
                 continue
 
+            # Write gTTS snippet to temp file for later access
             tmpfile = BytesIO(None)
             speech = gTTS(phrase, slow=self.slow, tld=self.tld)
             speech.write_to_fp(tmpfile)
@@ -191,34 +194,28 @@ class AudioProgramGenerator:
         return self.result
 
 
+def parse_input_args(args) -> dict:
+    print(args) if args["--debug"] else None
+    _args = {arg.lstrip("--").replace("-", "_"): args[arg] for arg in args}
+    _args["tld"] = _args["tld"] if _args["tld"] in TLDs else "com"
+    return _args
+
+
 def main():
     __version__ = get_version(__name__, Path(__file__).parent.parent)
-    args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
-    print(args) if args["--debug"] else None
-
-    phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
-    sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
-    slow = bool(args["--slow"])
-    attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
-    tld = str(args["--tld"]) if args["--tld"] else "com"
-    tld = tld if tld in TLDs else "com"
-    hide_progress_bar = bool(args["--hide-progress-bar"])
-
-    kwargs = dict(
-        slow=slow, attenuation=attenuation, tld=tld, hide_progress_bar=hide_progress_bar
-    )
+    raw_args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
+    args = parse_input_args(raw_args)
 
     pfile, sfile = None, None
     try:
-        pfile = open(phrase_file)
-        sfile = open(sound_file, "rb") if sound_file else None
+        pfile = open(args["<phrase_file>"])
+        sfile = open(args["<sound_file>"], "rb") if args["<sound_file>"] else None
 
-        apg = AudioProgramGenerator(pfile, sfile, **kwargs)
+        apg = AudioProgramGenerator(pfile, sfile, **args)
         result = apg.invoke()
 
-        with open(
-            str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb"
-        ) as result_file:
+        result_file_name = f"""{Path(args["<phrase_file>"]).parent / Path(args["<phrase_file>"]).stem}.mp3"""
+        with open(result_file_name, "wb") as result_file:
             result_file.write(result.getbuffer())
         result.close()
     except Exception as exc:
