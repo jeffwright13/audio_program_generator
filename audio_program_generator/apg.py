@@ -214,13 +214,14 @@ def main():
         sfile = open(sound_file, "rb") if sound_file else None
 
         apg = AudioProgramGenerator(pfile, sfile, **kwargs)
+
         result = apg.invoke()
 
-        with open(
-            str(phrase_file.parent / phrase_file.stem) + ".mp3", "wb"
-        ) as result_file:
+        output_path = Path(phrase_file.with_suffix(".mp3").name)
+
+        with output_path.open("wb") as result_file:
             result_file.write(result.getbuffer())
-        result.close()
+
     except Exception as exc:
         print(exc)
     finally:
