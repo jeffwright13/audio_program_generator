@@ -61,6 +61,7 @@ Options:
     -s --slow               Generate speech at half-speed.
     -t --tld TLD            Top level domain (for regional accents); choose one:
                             ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
+    -b --book-mode          From a plain text file, generate a reading of its contents
        --hide-progress-bar  Do not display progress bar during execution.
     -V --version            Show version.
     -h --help               Show this screen.
@@ -80,6 +81,7 @@ Example <phrase_file> format:
 Author:
     Jeff Wright <jeff.washcloth@gmail.com>
 """
+import os
 import re
 import math
 from io import StringIO, BytesIO
@@ -121,6 +123,7 @@ class AudioProgramGenerator:
         self.mix_file = None  # Mixed speeech/sound
         self.result = BytesIO(None)  # File-like object to store final result
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
+        self.book_mode = kwargs.get("book_mode", False)
 
     def _gen_speech(self):
         """Generate a combined speech file, made up of gTTS-generated speech
@@ -128,27 +131,46 @@ class AudioProgramGenerator:
 
         combined = AudioSegment.empty()
 
-        for phrase, duration in tqdm(
-            parse_textfile(self.phrase_file), disable=self.hide_progress_bar
-        ):
+        if self.book_mode:
+            for phrase in tqdm(
+                self.phrase_file.split(os.linesep), disable=self.hide_progress_bar
+            ):
+                # Skip blank phrases or gTTS will throw exception
+                if not phrase.strip():
+                    continue
 
-            # Skip blank phrases or gTTS will throw exception
-            if not phrase.strip():
-                continue
+                # Write gTTS snippet to temp file for later access
+                tmpfile = BytesIO(None)
+                speech = gTTS(phrase, slow=self.slow, tld=self.tld)
+                speech.write_to_fp(tmpfile)
+                tmpfile.seek(0)
 
-            tmpfile = BytesIO(None)
-            speech = gTTS(phrase, slow=self.slow, tld=self.tld)
-            speech.write_to_fp(tmpfile)
-            tmpfile.seek(0)
+                # Add the current speech snippet + corresponding silence
+                # to the combined file, building up for each new line.
+                snippet = AudioSegment.from_file(tmpfile, format="mp3")
+                combined += snippet
+                tmpfile.close()
+        else:
+            for phrase, duration in tqdm(
+                parse_textfile(self.phrase_file), disable=self.hide_progress_bar
+            ):
+                # Skip blank phrases or gTTS will throw exception
+                if not phrase.strip():
+                    continue
 
-            # Add the current speech snippet + corresponding silence
-            # to the combined file, building up for each new line.
-            snippet = AudioSegment.from_file(tmpfile, format="mp3")
-            combined += snippet
-            silence = AudioSegment.silent(duration=1000 * int(duration))
-            combined += silence
+                # Write gTTS snippet to temp file for later access
+                tmpfile = BytesIO(None)
+                speech = gTTS(phrase, slow=self.slow, tld=self.tld)
+                speech.write_to_fp(tmpfile)
+                tmpfile.seek(0)
 
-            tmpfile.close()
+                # Add the current speech snippet + corresponding silence
+                # to the combined file, building up for each new line.
+                snippet = AudioSegment.from_file(tmpfile, format="mp3")
+                combined += snippet
+                silence = AudioSegment.silent(duration=1000 * int(duration))
+                combined += silence
+                tmpfile.close()
 
         self.speech_file = combined
 
@@ -191,35 +213,28 @@ class AudioProgramGenerator:
         return self.result
 
 
+def parse_input_args(args) -> dict:
+    print(args) if args["--debug"] else None
+    _args = {arg.lstrip("--").replace("-", "_"): args[arg] for arg in args}
+    _args["tld"] = _args["tld"] if _args["tld"] in TLDs else "com"
+    return _args
+
+
 def main():
     __version__ = get_version(__name__, Path(__file__).parent.parent)
-    args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
-    print(args) if args["--debug"] else None
-
-    phrase_file = Path(args["<phrase_file>"]) if args["<phrase_file>"] else None
-    sound_file = Path(args["<sound_file>"]) if args["<sound_file>"] else None
-    slow = bool(args["--slow"])
-    attenuation = int(args["--attenuation"]) if args["--attenuation"] else 0
-    tld = str(args["--tld"]) if args["--tld"] else "com"
-    tld = tld if tld in TLDs else "com"
-    hide_progress_bar = bool(args["--hide-progress-bar"])
-
-    kwargs = dict(
-        slow=slow, attenuation=attenuation, tld=tld, hide_progress_bar=hide_progress_bar
-    )
+    raw_args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
+    args = parse_input_args(raw_args)
 
     pfile, sfile = None, None
     try:
-        pfile = open(phrase_file)
-        sfile = open(sound_file, "rb") if sound_file else None
+        pfile = open(args["<phrase_file>"])
+        sfile = open(args["<sound_file>"], "rb") if args["<sound_file>"] else None
 
-        apg = AudioProgramGenerator(pfile, sfile, **kwargs)
-
+        apg = AudioProgramGenerator(pfile, sfile, **args)
         result = apg.invoke()
 
-        output_path = Path(phrase_file.with_suffix(".mp3").name)
-
-        with output_path.open("wb") as result_file:
+        result_file_name = f"""{Path(args["<phrase_file>"]).parent / Path(args["<phrase_file>"]).stem}.mp3"""
+        with open(result_file_name, "wb") as result_file:
             result_file.write(result.getbuffer())
 
     except Exception as exc:

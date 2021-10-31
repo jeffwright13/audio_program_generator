@@ -1,4 +1,6 @@
 
+[![Python package](https://github.com/jeffwright13/audio_program_generator/actions/workflows/python-package.yml/badge.svg)](https://github.com/jeffwright13/audio_program_generator/actions/workflows/python-package.yml)
+
 # apg (audio_program_generator)
 Generates an audio program from text, with option to mix in background sound
 
@@ -34,6 +36,14 @@ Possible use cases:
 - Once this is done, you will have an "apg" executable available in your terminal. You can type `apg` for basic help, or `apg --help` for full instructions.
 - Exit the poetry virtual environment when finished:
     - `exit`
+
+## With `docker`:
+- Clone the repo and cd into the directory:
+    - `git clone https://github.com/jeffwright13/audio_program_generator.git`
+    - `cd audio_program_generator`
+- Execute `make build` (builds Docker image)
+- Execute `make run` (runs container and enters in `poetry` shell, ready to run `apg` executable
+- Results from `make run` will be available locally in the `/apgfiles` folder, even after the container is stopped
 
 ## With `flask`:
 - There is a [sister project](https://github.com/jeffwright13/apg_flask) that wraps the apg module in a bare-bones Flask app. This can be hosted locally, or in a cloud provider such as Heroku, Digital Ocean, or AWS. This method is considered experimental at the moment, and is not officially supported.
