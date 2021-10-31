@@ -1,6 +1,41 @@
+import io
 import pytest
+
 from tempfile import TemporaryFile
+
 import audio_program_generator.apg as apg
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        ({}),
+        # add more kwargs here that would work
+    ],
+)
+def test_create_audio_program_generator_success(phrase_file, sound_file, kwargs):
+    instance = apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
+    assert isinstance(instance, apg.AudioProgramGenerator)
+
+
+@pytest.mark.parametrize(
+    "phrase_file,sound_file,kwargs,expected_error",
+    [
+        (None, None, {}, AttributeError),
+        # add more busted argument combinations here
+    ],
+)
+def test_create_audio_program_generator_failure(
+    phrase_file, sound_file, kwargs, expected_error
+):
+    with pytest.raises(expected_error):
+        instance = apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
+
+
+def test_audio_program_generator_invoke(APG):
+    buf = APG.invoke()
+    assert isinstance(buf, io.BytesIO)
+
 
 # Test existence of module functions
 def test_module_functions_exist():
@@ -9,13 +44,10 @@ def test_module_functions_exist():
 
 
 # Test that all expected class methods are there
-def test_all_class_methods_exist(capsys):
-    with capsys.disabled():
-        fh = TemporaryFile()
-        A = apg.AudioProgramGenerator(fh)
-        assert "_gen_speech" in dir(A)
-        assert "_mix" in dir(A)
-        assert "invoke" in dir(A)
+def test_all_class_methods_exist(APG):
+    assert "_gen_speech" in dir(APG)
+    assert "_mix" in dir(APG)
+    assert "invoke" in dir(APG)
 
 
 # Test the regex parser

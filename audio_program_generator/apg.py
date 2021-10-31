@@ -236,7 +236,7 @@ def main():
         result_file_name = f"""{Path(args["<phrase_file>"]).parent / Path(args["<phrase_file>"]).stem}.mp3"""
         with open(result_file_name, "wb") as result_file:
             result_file.write(result.getbuffer())
-        result.close()
+
     except Exception as exc:
         print(exc)
     finally:
