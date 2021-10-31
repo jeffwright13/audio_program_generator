@@ -4,9 +4,9 @@
 name: Python package
 on:
   push:
-    branches: [ main ]
+    branches: [ main githubactions ]
   pull_request:
-    branches: [ main ]
+    branches: [ main githubactions ]
 jobs:
   # build and test from source:
   #   runs-on: ubuntu-latest
