@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "audio_program_generator"
-version = "1.6.5.0"
+version = "1.7.1.0"
 description = "Create an audio program from a text file containing English sentences"
 authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
 license = "MIT"
@@ -23,14 +23,15 @@ tqdm = "^4.61.0"
 single-source = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
+black = "^21.5b2"
+flake8 = "^3.9.2"
+ipython = "^7.24.1"
+jedi = "^0.17.2"
 pytest = "^5.2"
 pytest-html = "^3.1"
 pytest-cov = "^2.12"
-black = "^21.5b2"
 pylint = "^2.8.3"
 pyflakes = "^2.3.1"
-ipython = "^7.24.1"
-flake8 = "^3.9.2"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
