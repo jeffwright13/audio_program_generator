@@ -6,6 +6,8 @@ Generates an audio program from text, with option to mix in background sound
 
 Possible use cases:
 - make your own yoga or qi gong routine
+- play a list of daily affirmations
+- meditate to a mantra with drone music in the background
 - create an audio book
 - read a kid a bedtime story without actually having to do the reading
 
@@ -67,6 +69,8 @@ The `--slow` option generates each speech snippet is a slow-spoken style.
 
 The `--tld` option allows the user to select one of several regional 'accents' (English only). For accents, select one from the following list: ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
 
+Selecting `--book-mode' allows creating a spoken-word program (with or without background soundfile). It does this by reading in a file that does not have inter-phrase durations inserted, as is normally the case. This feature is new and needs some tweaking. For now, just make sure your input file is pure text, and experiement with using a single line (with many sentences) as one paragraph vs. multiple lines, one per sentence. You wil notice a difference in how the 'speaker' pauses between phrases.
+
 The CLI prints out a progress bar as the phrase file is converted into speech snippets. No progress bar is shown for the secondary mix step. There may be a significant delay in going from the end of the first stage (snippet generation) to the end of the second stage (mixing), primarily because of reading in the .wav file, which may be large. For this reason, you may want to select a sound file for mixing that is small (suggested <20MB). Otherwise, be prepared to wait. The progress bar may be disabled with the `--no-progress-bar` option.
 
 # Example <phrase_file> format:
@@ -74,5 +78,13 @@ The CLI prints out a progress bar as the phrase file is converted into speech sn
     Phrase Two;5
     Phrase Three;0
 
+# Example `--book-mode` file format:
+    Here we have sentence number one. It's a lovely sentence, and deserves its own paragraph.
+    Here is a second paragraph, and this is sentence number one (again) in that paragraph. And this is sentence number two! Then shalt thou count to three - no more, no less. Three shall be the number thou shalt count, and the number of the counting shall be three. Four shalt thou not count, neither count thou two, excepting that thou then proceed to three. Five is right out. Once the number three, being the third number, be reached, then lobbest thou thy Holy Hand Grenade of Antioch towards thy foe, who, being naughty in my sight, shall snuff it.
+
 # Author:
 Jeff Wright <jeff.washcloth@gmail.com>
+
+# Collaborators:
+Bob Belderbos
+Erik OShaughnessy
