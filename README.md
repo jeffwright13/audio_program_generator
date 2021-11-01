@@ -12,10 +12,13 @@ Possible use cases:
 - read a kid a bedtime story without actually having to do the reading
 
 # Prerequisites
-* Python (3.7+) [*note to mac users: your system may be using Python 2.7 by default. To find out, issue the command `python --version`. If your system shows anything less than 3.7, make sure you create a virtual environment before installing this package (see Installation section below)*]
-* [pip](https://pypi.org/project/pip/) (option 1)
-* [git](https://git-scm.com/) + [poetry](https://python-poetry.org/) (option 2)
-* Local installation of [ffmpeg](https://www.ffmpeg.org/)
+Either:
+ * Python (3.7+)
+ * [pip](https://pypi.org/project/pip/) (option 1)
+ * [git](https://git-scm.com/) + [poetry](https://python-poetry.org/) (option 2)
+ * Local installation of [ffmpeg](https://www.ffmpeg.org/)
+Or:
+ * [docker](https://www.docker.com/)
 
 # Installation & Execution
 ## With `pip`:
@@ -73,18 +76,37 @@ Specifying option `--book-mode` creates a spoken-word program (with or without b
 
 The CLI prints out a progress bar as the phrase file is converted into speech snippets. No progress bar is shown for the secondary mix step. There may be a significant delay in going from the end of the first stage (snippet generation) to the end of the second stage (mixing), primarily because of reading in the .wav file, which may be large. For this reason, you may want to select a sound file for mixing that is small (suggested <20MB). Otherwise, be prepared to wait. The progress bar may be disabled with the `--no-progress-bar` option.
 
-# Example <phrase_file> format:
+# Example `<phrase_file>` file format:
     Phrase One;2
     Phrase Two;5
     Phrase Three;0
 
 # Example `--book-mode` file format:
-    Here we have sentence number one. It's a lovely sentence, and deserves its own paragraph.
+    Here we have sentence number one (which is a lovely sentence, and deserves its own paragraph).
+
     Here is a second paragraph, and this is sentence number one (again) in that paragraph. And this is sentence number two! Then shalt thou count to three - no more, no less. Three shall be the number thou shalt count, and the number of the counting shall be three. Four shalt thou not count, neither count thou two, excepting that thou then proceed to three. Five is right out. Once the number three, being the third number, be reached, then lobbest thou thy Holy Hand Grenade of Antioch towards thy foe, who, being naughty in my sight, shall snuff it.
+
+# Testing
+Tests are implemented in pytest. You don't really need to worry about that if all you want to do it run them, but chances are if you want to run them, you're probably some sort of a hacker or coder or programmer, and you want to know the deets. See the [source code](https://github.com/jeffwright13/audio_program_generator/tree/main/tests) for more info.
+
+To execute the tests, do one of the following:
+* Fire up your venv (see Installation & Execution section above), cd into the top level of the repo, and type `pytest`.
+
+* Do basically the same thing with poetry:
+
+    `poetry shell`
+
+    `pytest`
+
+* Use docker:
+
+    `make build-all`
+
+    `make test`
 
 # Author:
 Jeff Wright <jeff.washcloth@gmail.com>
 
 # Collaborators:
-Bob Belderbos
-Erik OShaughnessy
+- Bob Belderbos
+- Erik OShaughnessy
