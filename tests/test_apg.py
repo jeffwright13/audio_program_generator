@@ -1,8 +1,6 @@
 import io
 import pytest
-
 from tempfile import TemporaryFile
-
 import audio_program_generator.apg as apg
 
 
@@ -29,7 +27,7 @@ def test_create_audio_program_generator_failure(
     phrase_file, sound_file, kwargs, expected_error
 ):
     with pytest.raises(expected_error):
-        instance = apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
+        apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
 
 
 def test_audio_program_generator_invoke(APG):
