@@ -1,5 +1,6 @@
 
 [![Python package](https://github.com/jeffwright13/audio_program_generator/actions/workflows/python-package.yml/badge.svg)](https://github.com/jeffwright13/audio_program_generator/actions/workflows/python-package.yml)
+[![CodeQL](https://github.com/jeffwright13/audio_program_generator/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/jeffwright13/audio_program_generator/actions/workflows/codeql-analysis.yml)
 
 # apg (audio_program_generator)
 Generates an audio program from text, with option to mix in background sound
