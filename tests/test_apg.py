@@ -1,4 +1,6 @@
 import io
+from unittest.mock import patch
+
 import pytest
 
 from tempfile import TemporaryFile
@@ -32,7 +34,9 @@ def test_create_audio_program_generator_failure(
         instance = apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
 
 
-def test_audio_program_generator_invoke(APG):
+@patch('requests.Session.send')
+def test_audio_program_generator_invoke(session_mock, APG):
+    session_mock.return_value = 'string'
     buf = APG.invoke()
     assert isinstance(buf, io.BytesIO)
 
