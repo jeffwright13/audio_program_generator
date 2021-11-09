@@ -30,3 +30,4 @@ venv/
 .python-version
 *.sublime*
 *.egg-info*
+.coverage*

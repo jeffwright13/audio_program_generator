@@ -45,7 +45,7 @@ def sound_file(sound_path) -> io.BytesIO:
 @pytest.fixture(scope="session")
 def output_path(phrase_path) -> Path:
     """pathlib.Path of the expected output file."""
-    path = Path(phrase_path.with_suffix(".mp3").name)
+    path = phrase_path.with_suffix(".mp3")
     yield path
     path.unlink(missing_ok=True)
 
