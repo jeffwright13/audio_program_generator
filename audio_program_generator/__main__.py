@@ -127,3 +127,6 @@ def generate_subcommand(
 
     with output_path.open("wb") as output_file:
         output_file.write(audio_data.read())
+        
+if __name__ == "__main__":
+    cli()
