@@ -14,6 +14,9 @@ repository = "https://github.com/jeffwright13/audio_program_generator/"
 [tool.poetry.scripts]
 apg = "audio_program_generator.apg:main"
 
+ncli = "audio_program_generator.__main__:cli"
+
+
 [tool.poetry.dependencies]
 python = "^3.7"
 docopt = "^0.6.2"
@@ -21,6 +24,7 @@ gTTS = "^2.2.2"
 pydub = "^0.25.1"
 tqdm = "^4.61.0"
 single-source = "^0.2.0"
+typer = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b2"
