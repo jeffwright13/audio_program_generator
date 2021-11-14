@@ -1,11 +1,11 @@
 """
 Description:
     apg.py:
-    Generate audio program of spoken phrases, with optional background
+    (1) Generate audio program of spoken phrases, with optional background
     sound file mixed in.
 
     NOTE: the following instructions/guidelines apply to the command line
-    interface only. Refer to the README if you are importing this code
+    interface only. Refer to the source code if you are importing this code
     as a module/package.
 
     User populates a semicolon-separated text file with plain-text phrases,
@@ -21,6 +21,15 @@ Description:
     file is the same as the specified input file. So, for example, if the
     script is given input file "phrases.txt", the output file will be
     "phrases.mp3".
+
+    The CLI prints out a progress bar as the phrase file is converted into gTTS
+    speech snippets. However, no progress bar is shown for the secondary mix
+    step (when the optional sound_file parameter is specified). There can be a
+    significant delay in going from the end of the first stage (snippet
+    generation) to the end of the second stage (mixing), primarily because of
+    reading in the .wav file. For this reason, you may want to select a sound
+    file for mixing that is small (suggested <20MB). Otherwise, be prepared to
+    wait. The progress bar may be disabled with the -n option.
 
     Specifying the optional sound_file parameter allows the user to mix in
     background sounds. This parameter represents the path/filename of a sound
@@ -38,15 +47,13 @@ Description:
     See https://gtts.readthedocs.io/en/v2.2.3/module.html#localized-accents
     for full detils.
 
-    The CLI prints out a progress bar as the phrase file is converted into gTTS
-    speech snippets. However, no progress bar is shown for the secondary mix
-    step (when the optional sound_file parameter is specified). There can be a
-    significant delay in going from the end of the first stage (snippet
-    generation) to the end of the second stage (mixing), primarily because of
-    reading in the .wav file. For this reason, you may want to select a sound
-    file for mixing that is small (suggested <20MB). Otherwise, be prepared to
-    wait. The progress bar may be disabled with the -n option.
-
+    Specifying option `--book-mode` creates a spoken-word program (with or without
+    background soundfile). It does this by reading in a file that does not have
+    inter-phrase durations inserted, as is normally the case. This feature is new
+    and needs some tweaking. For now, just make sure your input file is pure text,
+    and experiement with using a single line (with many sentences) as one paragraph
+    vs. multiple lines, one per sentence. You wil notice a difference in how the
+    'speaker' pauses between phrases.
 
 Usage:
     apg [options] <phrase_file> [<sound_file>]
@@ -57,7 +64,6 @@ Options:
     -a --attenuation LEV    Set attenuation level of background file (non-
                             negative number indicating dB attenuation)
                             ([default: 0]).
-    -d --debug              Print debug statements to console.
     -s --slow               Generate speech at half-speed.
     -t --tld TLD            Top level domain (for regional accents); choose one:
                             ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
@@ -69,6 +75,8 @@ Options:
 Arguments:
     phrase_file             Path/name of semicolon-separated text file
                             containing phrases and silence durations.
+                            In book mode, the name of the all-text input file
+                            to 'read'.
     sound_file              Path/name of optional wavefile to mix with the
                             speech generated from the phrase file. Useful for
                             background music/sounds. Must be in .wav format.
@@ -214,7 +222,6 @@ class AudioProgramGenerator:
 
 
 def parse_input_args(args) -> dict:
-    print(args) if args["--debug"] else None
     _args = {arg.lstrip("--").replace("-", "_"): args[arg] for arg in args}
     _args["tld"] = _args["tld"] if _args["tld"] in TLDs else "com"
     return _args
