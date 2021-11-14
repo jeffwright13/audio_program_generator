@@ -2,36 +2,22 @@
 
 """
 
+import errno
+import os
+
 from pathlib import Path
 from enum import Enum
 
+import pydub
 import typer
 
 from .apg import AudioProgramGenerator
 
+from .accent import Accent
+from .spoken_program import SpokenProgram
+
+
 cli = typer.Typer()
-
-
-class RegionalAccent(str, Enum):
-    AU: str = "AU"
-    CA: str = "CA"
-    IE: str = "IE"
-    IN: str = "IN"
-    UK: str = "UK"
-    US: str = "US"
-    ZA: str = "ZA"
-
-    @classmethod
-    def get_tld(cls, region: str) -> str:
-        return {
-            "au": "com.au",
-            "ca": "ca",
-            "ie": "ie",
-            "in": "co.in",
-            "uk": "co.uk",
-            "us": "com",
-            "za": "co.za",
-        }.get(region.lower())
 
 
 @cli.command()
@@ -65,8 +51,8 @@ def generate_subcommand(
         show_default=True,
         help="Generate speech at half-speed.",
     ),
-    regional_accent: RegionalAccent = typer.Option(
-        RegionalAccent.US.value,
+    accent: Accent = typer.Option(
+        Accent.US.value,
         "--region",
         "-r",
         show_default=True,
@@ -109,21 +95,31 @@ def generate_subcommand(
         output_path = Path.cwd() / phrase_path.with_suffix(".mp3").name
 
     try:
-        sound_file = sound_path.open("rb")
-    except AttributeError:
-        sound_file = None
+        if sound_path and not sound_path.exists():
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), str(sound_path)
+            )
 
-    with phrase_path.open("r") as phrase_file:
-        apGen = AudioProgramGenerator(
-            phrase_file,
-            sound_file,
-            slow=slow,
-            attenuation=attenuation,
-            tld=RegionalAccent.get_tld(regional_accent),
+        program = SpokenProgram.from_file(phrase_path, structured=not book_mode)
+        audio = program.render(
+            sound_path,
+            accent,
+            slow,
+            attenuation,
             hide_progress_bar=hide_progress_bar,
-            book_mode=book_mode,
         )
-        audio_data = apGen.invoke()
 
-    with output_path.open("wb") as output_file:
-        output_file.write(audio_data.read())
+        audio.export(str(output_path))
+
+        if not hide_progress_bar:
+            typer.secho("Wrote output to: ", nl=False)
+            typer.secho(str(output_path.absolute()), fg="green")
+    except FileNotFoundError as error:
+        typer.secho(f"File not found: {error.filename}", fg="red")
+    except Exception as error:
+        typer.secho(str(error), fg="red")
+        raise typer.Exit()
+
+
+if __name__ == "__main__":
+    cli()
