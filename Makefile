@@ -1,13 +1,20 @@
 DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+NAME:=$(shell grep -e "^name\s*=\s*" pyproject.toml | cut -d = -f 2 | xargs)
+VERSION:=$(shell grep -e "^version\s*=\s*" pyproject.toml | cut -d = -f 2 | xargs)
 
-build-all:	build-run build-test
+apg-build:
+	docker build --target apg-run --tag $(NAME):$(VERSION) .
 
-build-run:
-	docker build --target run --tag apg-run .
-run:
-	docker run --rm -it -v $(DIR)/apgfiles:/audio_program_generator/apgfiles apg-run
+apg:
+	docker run --rm -it -v $(DIR)/apgfiles:/audio_program_generator/apgfiles $(NAME):$(VERSION) ${args}
 
-build-test:
-	docker build --target test --tag apg-test .
+apg-build-test:
+	docker build --target apg-test --tag apg-test:$(VERSION) .
+
 test:
-	docker run --rm -it -v $(DIR)/apgfiles:/audio_program_generator/apgfiles apg-test
+	docker run --rm -it -v $(DIR)/apgfiles:/audio_program_generator/apgfiles apg-test:$(VERSION)
+
+.PHONY : clean
+clean:
+	docker container rm -f $(NAME):$(VERSION)
+	docker image rm -f $(NAME):$(VERSION)
