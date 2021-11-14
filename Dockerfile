@@ -26,21 +26,19 @@ ARG APG_SRC_DIR=/audio_program_generator
 WORKDIR $APG_SRC_DIR
 RUN pip install --no-cache-dir poetry
 
-###################
-FROM poetry AS run
-###################
+######################
+FROM poetry AS apg-run
+######################
 ARG APG_SRC_DIR=/audio_program_generator
 WORKDIR $APG_SRC_DIR
-COPY ./entry-run.sh entry-run.sh
-RUN cd $APG_SRC_DIR && \
-    poetry install --no-interaction --no-dev
+COPY pyproject.toml ./
+COPY poetry.lock ./
+RUN poetry install --no-interaction --no-dev
+ENTRYPOINT ["/bin/bash", "-c", "poetry run apg \"$@\"", "--"]
 
-ENTRYPOINT ["/bin/bash"]
-CMD ["/audio_program_generator/entry-run.sh"]
-
-####################
-FROM poetry AS test
-####################
+#######################
+FROM poetry AS apg-test
+#######################
 ARG APG_SRC_DIR=/audio_program_generator
 COPY ./entry-test.sh ./entry-test.sh
 RUN cd $APG_SRC_DIR && \
