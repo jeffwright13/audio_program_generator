@@ -122,6 +122,9 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 class AudioProgramGenerator:
     def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **kwargs):
         """Initialize class instance"""
+        self.filenames_valid = self._validate_filename_extensions(
+            phrase_file, sound_file
+        )  # Only support '.txt', '.wav' for phrase_file, sound_file
         self.phrase_file = phrase_file.read()  # Fileobj to generate speech segments
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.slow = kwargs.get("slow", False)  # Half-speed speech if True
@@ -206,9 +209,15 @@ class AudioProgramGenerator:
             (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
         )
 
+    def _validate_filename_extensions(self, pf: StringIO, sf: BytesIO) -> bool:
+        if sf:
+            return Path(sf.name).suffix == ".wav" and Path(pf.name).suffix == ".txt"
+        return Path(pf.name).suffix == ".txt"
+
     def invoke(self) -> BytesIO:
         """Generate gTTS speech snippets for each phrase; optionally mix with
         background sound-file; then save resultant mp3."""
+        assert self.filenames_valid
         self._gen_speech()
 
         if self.sound_file:
