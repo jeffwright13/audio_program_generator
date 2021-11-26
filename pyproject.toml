@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "audio_program_generator"
-version = "1.8.0.0"
+version = "1.8.0"
 description = "Create an audio program from a text file containing English sentences"
 authors = ["Jeff Wright <jeff.washcloth@gmail.com>"]
 license = "MIT"
@@ -12,12 +12,10 @@ readme = "README.md"
 repository = "https://github.com/jeffwright13/audio_program_generator/"
 
 [tool.poetry.scripts]
-apg = "audio_program_generator.apg:main"
-ncli = "audio_program_generator.__main__:cli"
+apg = "audio_program_generator.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-docopt = "^0.6.2"
 gTTS = "^2.2.2"
 pydub = "^0.25.1"
 tqdm = "^4.61.0"
