@@ -1,13 +1,15 @@
-""" command-line interface
+"""
+command-line interface for audio program generator
 
 """
-
+import typer
+from typing import Optional
 from pathlib import Path
 from enum import Enum
+from single_source import get_version
+from audio_program_generator.apg import AudioProgramGenerator
 
-import typer
-
-from .apg import AudioProgramGenerator
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 cli = typer.Typer()
 
@@ -33,33 +35,38 @@ class RegionalAccent(str, Enum):
             "za": "co.za",
         }.get(region.lower())
 
+def version_callback(value: bool):
+    if value:
+        __version__ = get_version(__name__, Path(__file__).parent.parent)
+        typer.echo(f"Audio Program Generator (apg) version {__version__}")
+        raise typer.Exit()
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 def generate_subcommand(
-    phrase_path: Path,
+    phrase_path: Path = typer.Argument(
+        ..., help="Absolute or relative path to phrase file."
+    ),
+    sound_path: Path = typer.Argument(
+        None,
+        help="Path to .wav file to mix with generated speech . [optional]",
+    ),
     output_path: Path = typer.Option(
         None,
-        "--output-path",
         "-o",
+        "--output-path",
         show_default=True,
         help="Path to store resulting MP3 audio file.",
     ),
-    sound_path: Path = typer.Option(
-        None,
-        "--sound-path",
-        "-s",
-        show_default=True,
-        help="Path for an optional WAV to mix with the generated speech.",
-    ),
     attenuation: int = typer.Option(
         0,
-        "--attenuation",
         "-a",
+        "--attenuation",
         show_default=True,
-        help="Set background file attenuation in dB",
+        help="Set background file attenuation in dB.",
     ),
     slow: bool = typer.Option(
         False,
+        "-s",
         "--slow",
         is_flag=True,
         show_default=True,
@@ -67,54 +74,46 @@ def generate_subcommand(
     ),
     regional_accent: RegionalAccent = typer.Option(
         RegionalAccent.US.value,
-        "--region",
         "-r",
+        "--region",
         show_default=True,
         help="Regional accent to apply to generated speech.",
     ),
     book_mode: bool = typer.Option(
         False,
+        "-b",
         "--book-mode",
-        "-B",
         is_flag=True,
         show_default=True,
-        help="Operates on plain text without phrase pause formatting.",
+        help="Operates on plain-text file without phrase/pause formatting.",
     ),
     hide_progress_bar: bool = typer.Option(
         False,
+        "-H",
         "--hide-progress-bar",
         is_flag=True,
         show_default=True,
         help="Do not display progress bar during execution.",
     ),
+    version: Optional[bool] = typer.Option(
+        None,
+        "-v",
+        "--version",
+        help="Show version and exit.",
+        callback=version_callback,
+    ),
 ) -> None:
-    """Generate audio program of spoken phrases, with optional background
-    sound file mixed in.
-
-    The user supplies a semicolon-separated text file with plain-text
-    phrases, each followed by an inter-phrase duration. Each line of
-    the file is comprised of:
-
-    - one phrase to be spoken
-    - a semicolon
-    - a silence duration (specified in seconds)
-
-    The script generates and saves a single MP3 file. If a path for
-    the output file is not given, the output file will have the same
-    base name as the input file with the suffix ".mp3" in the current
-    working directory.
-    """
 
     if not output_path:
-        output_path = Path.cwd() / phrase_path.with_suffix(".mp3").name
+        output_path = phrase_path.with_suffix(".mp3")
 
     try:
         sound_file = sound_path.open("rb")
-    except AttributeError:
+    except (AttributeError, FileNotFoundError):
         sound_file = None
 
     with phrase_path.open("r") as phrase_file:
-        apGen = AudioProgramGenerator(
+        Apg = AudioProgramGenerator(
             phrase_file,
             sound_file,
             slow=slow,
@@ -123,10 +122,11 @@ def generate_subcommand(
             hide_progress_bar=hide_progress_bar,
             book_mode=book_mode,
         )
-        audio_data = apGen.invoke()
+        audio_data = Apg.invoke()
 
     with output_path.open("wb") as output_file:
         output_file.write(audio_data.read())
-        
+
+
 if __name__ == "__main__":
     cli()

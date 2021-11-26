@@ -13,9 +13,7 @@ repository = "https://github.com/jeffwright13/audio_program_generator/"
 
 [tool.poetry.scripts]
 apg = "audio_program_generator.apg:main"
-
 ncli = "audio_program_generator.__main__:cli"
-
 
 [tool.poetry.dependencies]
 python = "^3.7"
