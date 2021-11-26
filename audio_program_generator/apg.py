@@ -1,115 +1,27 @@
 """
-Description:
-    apg.py:
-    (1) Generate audio program of spoken phrases, with optional background
-    sound file mixed in.
+Generate audio program of spoken phrases, with optional background sound file mixed in
 
-    NOTE: the following instructions/guidelines apply to the command line
-    interface only. Refer to the source code if you are importing this code
-    as a module/package.
-
-    User populates a semicolon-separated text file with plain-text phrases,
-    each followed by an inter-phrase duration. Each line of the file is
-    comprised of:
-      - one phrase to be spoken
-      - a semicolon
-      - a silence duration (specified in seconds)
-    Obviously, do not include superfluous semicolons in this file. An exception
-    will occur if you do.
-
-    The script generates and saves a single MP3 file. The base name of the
-    file is the same as the specified input file. So, for example, if the
-    script is given input file "phrases.txt", the output file will be
-    "phrases.mp3".
-
-    The CLI prints out a progress bar as the phrase file is converted into gTTS
-    speech snippets. However, no progress bar is shown for the secondary mix
-    step (when the optional sound_file parameter is specified). There can be a
-    significant delay in going from the end of the first stage (snippet
-    generation) to the end of the second stage (mixing), primarily because of
-    reading in the .wav file. For this reason, you may want to select a sound
-    file for mixing that is small (suggested <20MB). Otherwise, be prepared to
-    wait. The progress bar may be disabled with the -n option.
-
-    Specifying the optional sound_file parameter allows the user to mix in
-    background sounds. This parameter represents the path/filename of a sound
-    file to be mixed in with the speech file generated from the phrase file. If
-    the sound file is shorter in duration than the generated speech file, it
-    will be looped. If it is longer, it will be truncated. The resulting
-    background sound (looped or  not) will be faded in and out to ensure a
-    smooth transition. Currently, only .wav files are supported.
-
-    Other options available include an attenuation parameter (dB0 applied to
-    the mix-in sound file; a 'slow' flag, resulting slower speech; and a 'tld'
-    option, allowing the user to select one of several regional 'accents'
-    (English only). For accents, select one from the following list:
-    ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
-    See https://gtts.readthedocs.io/en/v2.2.3/module.html#localized-accents
-    for full detils.
-
-    Specifying option `--book-mode` creates a spoken-word program (with or without
-    background soundfile). It does this by reading in a file that does not have
-    inter-phrase durations inserted, as is normally the case. This feature is new
-    and needs some tweaking. For now, just make sure your input file is pure text,
-    and experiement with using a single line (with many sentences) as one paragraph
-    vs. multiple lines, one per sentence. You wil notice a difference in how the
-    'speaker' pauses between phrases.
-
-Usage:
-    apg [options] <phrase_file> [<sound_file>]
-    apg -V --version
-    apg -h --help
-
-Options:
-    -a --attenuation LEV    Set attenuation level of background file (non-
-                            negative number indicating dB attenuation)
-                            ([default: 0]).
-    -s --slow               Generate speech at half-speed.
-    -t --tld TLD            Top level domain (for regional accents); choose one:
-                            ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
-    -b --book-mode          From a plain text file, generate a reading of its contents
-       --hide-progress-bar  Do not display progress bar during execution.
-    -V --version            Show version.
-    -h --help               Show this screen.
-
-Arguments:
-    phrase_file             Path/name of semicolon-separated text file
-                            containing phrases and silence durations.
-                            In book mode, the name of the all-text input file
-                            to 'read'.
-    sound_file              Path/name of optional wavefile to mix with the
-                            speech generated from the phrase file. Useful for
-                            background music/sounds. Must be in .wav format.
-
-Example <phrase_file> format:
-    Phrase One;2
-    Phrase Two;5
-    Phrase Three;0
-
-Author:
-    Jeff Wright <jeff.washcloth@gmail.com>
 """
 import os
 import re
 import math
 from io import StringIO, BytesIO
 from pathlib import Path
-from docopt import docopt
 from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
-from single_source import get_version
 
-TLDs = ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
-
+from audio_program_generator import cli
 
 def parse_textfile(phrase_file_contents: str = "") -> list:
-    """Clean up user-supplied phrase file to comform with expected format"""
+    """
+    Clean up user-supplied phrase file to comform with expected format
+    """
 
-    def clean(input: str = "") -> str:
+    def clean(dirty: str = "") -> str:
         cleaner = r"[^A-Za-z0-9\s;\v]"
-        clean = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
-        return re.sub(clean, "", input)
+        cleaned = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
+        return re.sub(cleaned, "", dirty)
 
     def capture(cleaned: str = "") -> list:
         capturer = r"^\s*([\w\s]+?)\s*;\s*(\d+)\s*$"
@@ -121,7 +33,10 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
 class AudioProgramGenerator:
     def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **kwargs):
-        """Initialize class instance"""
+        """
+        Initialize class instance
+        """
+
         self.filenames_valid = self._validate_filename_extensions(
             phrase_file, sound_file
         )  # Only support '.txt', '.wav' for phrase_file, sound_file
@@ -137,8 +52,10 @@ class AudioProgramGenerator:
         self.book_mode = kwargs.get("book_mode", False)
 
     def _gen_speech(self):
-        """Generate a combined speech file, made up of gTTS-generated speech
-        snippets from each line in the phrase_file + corresponding silence."""
+        """
+        Generate a combined speech file, made up of gTTS-generated speech
+        snippets from each line in the phrase_file + corresponding silence.
+        """
 
         combined = AudioSegment.empty()
 
@@ -193,8 +110,11 @@ class AudioProgramGenerator:
         fadein: int = 3000,
         fadeout: int = 6000,
     ) -> AudioSegment:
-        """Mixes two pydub AudioSegments, then fades the result in/out.
-        Returns mixed AudioSegment."""
+        """
+        Mixes two pydub AudioSegments, then fades the result in/out.
+        Returns mixed AudioSegment.
+        """
+
         duration1 = len(segment1)
         duration2 = len(segment2)
 
@@ -209,14 +129,21 @@ class AudioProgramGenerator:
             (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
         )
 
-    def _validate_filename_extensions(self, pf: StringIO, sf: BytesIO) -> bool:
-        if sf:
-            return Path(sf.name).suffix == ".wav" and Path(pf.name).suffix == ".txt"
-        return Path(pf.name).suffix == ".txt"
+    def _validate_filename_extensions(self, phr_file: StringIO, snd_file: BytesIO) -> bool:
+        """
+        Verify attempted use of filenames
+        """
+
+        if snd_file:
+            return Path(snd_file.name).suffix == ".wav" and Path(phr_file.name).suffix == ".txt"
+        return Path(phr_file.name).suffix == ".txt"
 
     def invoke(self) -> BytesIO:
-        """Generate gTTS speech snippets for each phrase; optionally mix with
-        background sound-file; then save resultant mp3."""
+        """
+        Generate gTTS speech snippets for each phrase; optionally mix with
+        background sound-file; then save resultant mp3.
+        """
+
         assert self.filenames_valid
         self._gen_speech()
 
@@ -230,35 +157,5 @@ class AudioProgramGenerator:
         return self.result
 
 
-def parse_input_args(args) -> dict:
-    _args = {arg.lstrip("--").replace("-", "_"): args[arg] for arg in args}
-    _args["tld"] = _args["tld"] if _args["tld"] in TLDs else "com"
-    return _args
-
-
-def main():
-    __version__ = get_version(__name__, Path(__file__).parent.parent)
-    raw_args = docopt(__doc__, version=f"Audio Program Generator (apg) {__version__}")
-    args = parse_input_args(raw_args)
-
-    pfile, sfile = None, None
-    try:
-        pfile = open(args["<phrase_file>"])
-        sfile = open(args["<sound_file>"], "rb") if args["<sound_file>"] else None
-
-        apg = AudioProgramGenerator(pfile, sfile, **args)
-        result = apg.invoke()
-
-        result_file_name = f"""{Path(args["<phrase_file>"]).parent / Path(args["<phrase_file>"]).stem}.mp3"""
-        with open(result_file_name, "wb") as result_file:
-            result_file.write(result.getbuffer())
-
-    except Exception as exc:
-        print(exc)
-    finally:
-        pfile.close() if pfile else None
-        sfile.close() if sfile else None
-
-
 if __name__ == "__main__":
-    main()
+    cli.cli()

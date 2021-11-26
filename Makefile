@@ -1,6 +1,7 @@
 DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 NAME:=$(shell grep -e "^name\s*=\s*" pyproject.toml | cut -d = -f 2 | xargs)
 VERSION:=$(shell grep -e "^version\s*=\s*" pyproject.toml | cut -d = -f 2 | xargs)
+IGNORE_DIRS := dist|htmlcov|venv|__pycache__|audio_program_generator.egg-info
 
 apg-build:
 	docker build --target apg-run --tag $(NAME):$(VERSION) .
@@ -18,3 +19,6 @@ test:
 clean:
 	docker container rm -f $(NAME):$(VERSION)
 	docker image rm -f $(NAME):$(VERSION)
+
+tree:
+	tree -I "$(IGNORE_DIRS)"
