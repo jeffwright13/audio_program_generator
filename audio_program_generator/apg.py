@@ -11,8 +11,6 @@ from gtts import gTTS
 from pydub import AudioSegment
 from tqdm import tqdm
 
-from audio_program_generator import cli
-
 def parse_textfile(phrase_file_contents: str = "") -> list:
     """
     Clean up user-supplied phrase file to comform with expected format
@@ -155,7 +153,3 @@ class AudioProgramGenerator:
             self.speech_file.export(self.result, format="mp3")
 
         return self.result
-
-
-if __name__ == "__main__":
-    cli.cli()
