@@ -5,7 +5,7 @@ Generate audio program of spoken phrases, with optional background sound file mi
 import os
 import re
 import math
-from io import StringIO, BytesIO
+from io import TextIOWrapper, BytesIO, BufferedReader
 from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
@@ -31,7 +31,9 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
 
 class AudioProgramGenerator:
-    def __init__(self, phrase_file: StringIO, sound_file: BytesIO = None, **kwargs):
+    def __init__(
+        self, phrase_file: TextIOWrapper, sound_file: BufferedReader = None, **kwargs
+    ):
         """
         Initialize class instance
         """
@@ -122,7 +124,7 @@ class AudioProgramGenerator:
         )
 
     def _validate_filename_extensions(
-        self, phr_file: StringIO, snd_file: BytesIO
+        self, phr_file: TextIOWrapper, snd_file: BufferedReader
     ) -> bool:
         """
         Verify attempted use of filenames
@@ -138,7 +140,8 @@ class AudioProgramGenerator:
     def invoke(self) -> BytesIO:
         """
         Generate gTTS speech snippets for each phrase; optionally mix with
-        background sound-file; then save resultant mp3.
+        background sound-file.
+        Returns BytesIO object (encoded as mp3).
         """
         assert self.filenames_valid
         with alive_bar(0):
