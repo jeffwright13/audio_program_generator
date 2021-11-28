@@ -151,7 +151,3 @@ class AudioProgramGenerator:
             else:
                 self.speech_file.export(self.result, format="mp3")
         return self.result
-
-
-if __name__ == "__main__":
-    cli.cli()
