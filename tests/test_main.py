@@ -17,7 +17,6 @@ def test_apg_main_with_args(
     capsys,
 ):
     sys.argv = ["apg", str(phrase_path), str(sound_path)]
-    breakpoint()
     apg_main()
 
     assert output_path.exists()
