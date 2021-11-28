@@ -10,7 +10,6 @@ from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
-from audio_program_generator import cli
 
 
 def parse_textfile(phrase_file_contents: str = "") -> list:
