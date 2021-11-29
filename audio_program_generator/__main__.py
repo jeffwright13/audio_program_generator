@@ -3,10 +3,10 @@ command-line interface for audio program generator
 
 """
 import typer
+from io import StringIO
 from typing import Optional
 from pathlib import Path
 from enum import Enum
-from single_source import get_version
 from audio_program_generator.apg import AudioProgramGenerator
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -35,11 +35,21 @@ class RegionalAccent(str, Enum):
             "za": "co.za",
         }.get(region.lower())
 
+
+class OutputFormat(str, Enum):
+    wav: str = "wav"
+    mp3: str = "mp3"
+    ogg: str = "ogg"
+    aac: str = "aac"
+    flac: str = "flac"
+
+
 def version_callback(value: bool):
     if value:
-        __version__ = get_version(__name__, Path(__file__).parent.parent)
+        __version__ = AudioProgramGenerator(StringIO(None)).__version__
         typer.echo(f"Audio Program Generator (apg) version {__version__}")
         raise typer.Exit()
+
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 def generate_subcommand(
@@ -55,7 +65,15 @@ def generate_subcommand(
         "-o",
         "--output-path",
         show_default=True,
-        help="Path to store resulting MP3 audio file.",
+        help="Path to store resulting audio file.",
+    ),
+    output_format: OutputFormat = typer.Option(
+        OutputFormat.wav.value,
+        "-f",
+        "--format",
+        "--output-format",
+        show_default=True,
+        help="File format for output file.",
     ),
     attenuation: int = typer.Option(
         0,
@@ -104,9 +122,6 @@ def generate_subcommand(
     ),
 ) -> None:
 
-    if not output_path:
-        output_path = phrase_path.with_suffix(".mp3")
-
     try:
         sound_file = sound_path.open("rb")
     except (AttributeError, FileNotFoundError):
@@ -121,9 +136,12 @@ def generate_subcommand(
             tld=RegionalAccent.get_tld(regional_accent),
             hide_progress_bar=hide_progress_bar,
             book_mode=book_mode,
+            output_format=output_format.value,
         )
         audio_data = Apg.invoke()
 
+    if not output_path:
+        output_path = phrase_path.with_suffix(f".{output_format.value}")
     with output_path.open("wb") as output_file:
         output_file.write(audio_data.read())
 

@@ -17,7 +17,8 @@ Either:
  * Python (3.7+)
  * [pip](https://pypi.org/project/pip/) (option 1)
  * [git](https://git-scm.com/) + [poetry](https://python-poetry.org/) (option 2)
- * Local installation of [ffmpeg](https://www.ffmpeg.org/)
+ * Local installation of [ffmpeg](https://www.ffmpeg.org/) (to save results in formats other than .wav)
+
 Or:
  * [docker](https://www.docker.com/)
 
@@ -69,11 +70,11 @@ Populate a semicolon-separated text file with plain-text phrases, each followed 
 Provide a sound file for background sound (optional)
 Execute the command: `apg [options] <phrase_file> [sound_file]`
 
-The script will generate and save a single MP3 file. The base name of the MP3 file is the same as the specified input file. For example, if the script is given input file "phrases.txt", the output file will be "phrases.mp3". It will be saved to the same folder that the input text file was taken from.
-
-The CLI prints out a progress bar as the phrase file is converted into speech snippets. No progress bar is shown for the secondary mix step. There may be a significant delay in going from the end of the first stage (snippet generation) to the end of the second stage (mixing), primarily because of reading in the .wav file, which may be large. For this reason, you may want to select a sound file for mixing that is small (suggested <20MB). Otherwise, be prepared to wait. The progress bar may be disabled with the `--no-progress-bar` option.
+The script will generate and save a single audio file. The base name of the file will be the same as the specified input file. The output file will be saved to the same folder that the input text file was taken from, unless specified otherwise (using the "-o" option). For example, if the script is given input file "phrases.txt", the output file will be "phrases.wav" or "phrases.mp3"  or whatever the output format is set to be (using the "-f" option, which defults to ".wav").
 
 The optional `[sound_file]` parameter, when specified, is used to mix in background sounds/music. This parameter specifies the path/filename of the sound file to be mixed in with the speech generated from the phrase file. If the sound file is shorter in duration than the generated speech file, it will be looped. If it is longer, it will be truncated. The resulting background sound (looped or not) will be faded in and out to ensure a smooth transition (6 seconds at beginning and en). Currently, only .wav files are supported as inputs.
+
+The CLI prints out a progress bar by default. The progress bar may be disabled with the `--no-progress-bar` option.
 
 The `--attenuation` option allows fine-tuning the background sound level so it doesn't drown out the generated speech.
 

@@ -7,10 +7,11 @@ import re
 import math
 from io import StringIO, TextIOWrapper, BytesIO, BufferedReader
 from typing import Union
-from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
+from pathlib import Path
+from single_source import get_version
 
 
 def parse_textfile(phrase_file_contents: str = "") -> list:
@@ -41,7 +42,6 @@ class AudioProgramGenerator:
         """
         Initialize class instance
         """
-
         if isinstance(phrase_file, (TextIOWrapper, StringIO)):
             self.phrases = phrase_file.read()
         else:
@@ -50,6 +50,7 @@ class AudioProgramGenerator:
                 f"phrase_file must be either StringIO or TextIOWrapper, not {type(phrase_file)}.",
             )
 
+        self.__version__ = get_version(__name__, Path(__file__).parent.parent)
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.slow = kwargs.get("slow", False)  # Half-speed speech if True
         self.attenuation = kwargs.get("attenuation", 10)  # Attenuation value, if mixing
@@ -59,6 +60,7 @@ class AudioProgramGenerator:
         self.result = BytesIO(None)  # File-like object to store final result
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
         self.book_mode = kwargs.get("book_mode", False)
+        self.output_format = kwargs.get("output_format", "wav")
 
         config_handler.set_global(
             bar=None,
@@ -135,7 +137,7 @@ class AudioProgramGenerator:
         """
         Generate gTTS speech snippets for each phrase; optionally mix with
         background sound-file.
-        Returns BytesIO object (encoded as mp3).
+        Returns BytesIO object (encoded in format specified by 'output_format').
         """
         # assert self.filenames_valid
         with alive_bar(0):
@@ -143,7 +145,7 @@ class AudioProgramGenerator:
             if self.sound_file:
                 bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
                 self.mix_file = self._mix(self.speech_file, bkgnd, self.attenuation)
-                self.mix_file.export(self.result, format="mp3")
+                self.mix_file.export(self.result, format=self.output_format)
             else:
-                self.speech_file.export(self.result, format="mp3")
+                self.speech_file.export(self.result, format=self.output_format)
         return self.result
