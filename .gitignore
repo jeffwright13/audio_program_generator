@@ -2,6 +2,9 @@
 !requirements.txt
 *.mp3
 *.wav
+*.ogg
+*.flac
+*.aac
 *.xml
 *.html
 *.log
