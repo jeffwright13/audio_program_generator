@@ -10,6 +10,8 @@ from typing import Union
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
+from pathlib import Path
+from single_source import get_version
 
 
 def parse_textfile(phrase_file_contents: str = "") -> list:
@@ -40,7 +42,6 @@ class AudioProgramGenerator:
         """
         Initialize class instance
         """
-
         if isinstance(phrase_file, (TextIOWrapper, StringIO)):
             self.phrases = phrase_file.read()
         else:
@@ -49,6 +50,7 @@ class AudioProgramGenerator:
                 f"phrase_file must be either StringIO or TextIOWrapper, not {type(phrase_file)}.",
             )
 
+        self.__version__ = get_version(__name__, Path(__file__).parent.parent)
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.slow = kwargs.get("slow", False)  # Half-speed speech if True
         self.attenuation = kwargs.get("attenuation", 10)  # Attenuation value, if mixing

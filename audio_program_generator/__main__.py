@@ -3,10 +3,10 @@ command-line interface for audio program generator
 
 """
 import typer
+from io import StringIO
 from typing import Optional
 from pathlib import Path
 from enum import Enum
-from single_source import get_version
 from audio_program_generator.apg import AudioProgramGenerator
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -46,7 +46,7 @@ class OutputFormat(str, Enum):
 
 def version_callback(value: bool):
     if value:
-        __version__ = get_version(__name__, Path(__file__).parent.parent)
+        __version__ = AudioProgramGenerator(StringIO(None)).__version__
         typer.echo(f"Audio Program Generator (apg) version {__version__}")
         raise typer.Exit()
 
