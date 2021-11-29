@@ -7,7 +7,6 @@ import re
 import math
 from io import StringIO, TextIOWrapper, BytesIO, BufferedReader
 from typing import Union
-from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
@@ -59,6 +58,7 @@ class AudioProgramGenerator:
         self.result = BytesIO(None)  # File-like object to store final result
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
         self.book_mode = kwargs.get("book_mode", False)
+        self.output_format = kwargs.get("output_format", "wav")
 
         config_handler.set_global(
             bar=None,
@@ -135,7 +135,7 @@ class AudioProgramGenerator:
         """
         Generate gTTS speech snippets for each phrase; optionally mix with
         background sound-file.
-        Returns BytesIO object (encoded as mp3).
+        Returns BytesIO object (encoded in format specified by 'output_format').
         """
         # assert self.filenames_valid
         with alive_bar(0):
@@ -143,7 +143,7 @@ class AudioProgramGenerator:
             if self.sound_file:
                 bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
                 self.mix_file = self._mix(self.speech_file, bkgnd, self.attenuation)
-                self.mix_file.export(self.result, format="mp3")
+                self.mix_file.export(self.result, format=self.output_format)
             else:
-                self.speech_file.export(self.result, format="mp3")
+                self.speech_file.export(self.result, format=self.output_format)
         return self.result
