@@ -18,6 +18,7 @@ Either:
  * [pip](https://pypi.org/project/pip/) (option 1)
  * [git](https://git-scm.com/) + [poetry](https://python-poetry.org/) (option 2)
  * Local installation of [ffmpeg](https://www.ffmpeg.org/) (to save results in formats other than .wav)
+
 Or:
  * [docker](https://www.docker.com/)
 
