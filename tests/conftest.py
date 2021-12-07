@@ -14,7 +14,7 @@ import audio_program_generator.apg as apg
 def phrase_path() -> Path:
     """pathlib.Path to a known good phrase file.
 
-    Beginning lyrics of the song "Black Sunshite" by White Zombie.
+    Beginning lyrics of the song "Black Sunshine" by White Zombie.
     """
     return Path(__file__).absolute().parent / "resources/phrases.txt"
 

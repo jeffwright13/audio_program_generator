@@ -2,6 +2,9 @@
 !requirements.txt
 *.mp3
 *.wav
+*.ogg
+*.flac
+*.aac
 *.xml
 *.html
 *.log
@@ -17,6 +20,8 @@
 
 .cache/
 .DS_Store
+
+apgfiles/
 
 __pycache__/
 results/
