@@ -12,6 +12,38 @@ Possible use cases:
 - create an audio book
 - read a kid a bedtime story without actually having to do the reading
 
+# Basic Usage
+#### (see 'Detailed Usage' below for more info)
+```
+Usage: apg [OPTIONS] PHRASE_PATH [SOUND_PATH]
+
+Arguments:
+  PHRASE_PATH   Absolute or relative path to phrase file.  [required]
+  [SOUND_PATH]  Path to .wav file to mix with generated speech. [optional]
+
+Options:
+  -o, --output-path PATH          Path to store resulting audio file.
+  -f, --format, --output-format [wav|mp3|ogg|aac|flac]
+                                  File format for output file.  [default: wav]
+  -a, --attenuation INTEGER       Set background file attenuation in dB.
+                                  [default: 0]
+  -s, --slow                      Generate speech at half-speed.
+  -r, --region [AU|CA|IE|IN|UK|US|ZA]
+                                  Regional accent to apply to generated
+                                  speech.  [default: US]
+  -b, --book-mode                 Operates on plain-text file without
+                                  phrase/pause formatting.
+  -H, --hide-progress-bar         Do not display progress bar during
+                                  execution.
+  -v, --version                   Show version and exit.
+  --install-completion [bash|zsh|fish|powershell|pwsh]
+                                  Install completion for the specified shell.
+  --show-completion [bash|zsh|fish|powershell|pwsh]
+                                  Show completion for the specified shell, to
+                                  copy it or customize the installation.
+  -h, --help                      Show this message and exit.
+```
+
 # Prerequisites
 Either:
  * Python (3.7+)
@@ -49,8 +81,9 @@ Or:
     - `git clone https://github.com/jeffwright13/audio_program_generator.git`
     - `cd audio_program_generator`
 - Execute `make apg-build` (builds Docker image)
+- Place your <phrase_file> and any <sound_file> in the `apgfiles` subdirectory; docker will be looking for them there
 - Execute `make apg args=<args>` (runs container with specified arguments; if using multiple arguments, wrap them all in quotes)
-- Results from `make run` will be available locally in the `/apgfiles` folder, even after the container is stopped
+- Results from `make apg` will be available locally in the `/apgfiles` folder, even after the container is stopped
 - Examples:
     - `make apg args=--help`
     - `make apg args=-V`
@@ -60,7 +93,7 @@ Or:
 ## With `flask`:
 - There is a [sister project](https://github.com/jeffwright13/apg_flask) that wraps the apg module in a bare-bones Flask app. This can be hosted locally, or in a cloud provider such as Heroku, Digital Ocean, or AWS. This method is considered experimental at the moment, and is not officially supported.
 
-# Usage
+# Detailed Usage
 *Assumes you are using the provided `apg` command line interface, installed with one of the methods above.  Refer to the source code if you are importing this code as a module/package.*
 
 Populate a semicolon-separated text file with plain-text phrases, each followed by an inter-phrase duration (see example below). Each line of the file is comprised of:
