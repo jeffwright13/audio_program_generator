@@ -87,8 +87,8 @@ Or:
 - Examples:
     - `make apg args=--help`
     - `make apg args=-V`
-    - `make apg args="apgfiles/program.txt" "apgfiles/river.wav" -a 0 -t co.in`
-    - `make apg args=""apgfiles/program.txt" -slow -t co.in"`
+    - `make apg args="apgfiles/program.txt apgfiles/river.wav -a 0 -t co.in"`
+    - `make apg args="apgfiles/program.txt -slow -t co.in"`
 
 ## With `flask`:
 - There is a [sister project](https://github.com/jeffwright13/apg_flask) that wraps the apg module in a bare-bones Flask app. This can be hosted locally, or in a cloud provider such as Heroku, Digital Ocean, or AWS. This method is considered experimental at the moment, and is not officially supported.
