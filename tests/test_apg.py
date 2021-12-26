@@ -1,8 +1,5 @@
 import io
 import pytest
-
-from tempfile import TemporaryFile
-
 import audio_program_generator.apg as apg
 
 
@@ -19,9 +16,9 @@ def test_create_audio_program_generator_success(phrase_file, sound_file, kwargs)
 
 
 @pytest.mark.parametrize(
-    "phrase_file,sound_file,kwargs,expected_error",
+    "phrase_file, sound_file, kwargs, expected_error",
     [
-        (None, None, {}, AttributeError),
+        (None, None, {}, TypeError),
         # add more busted argument combinations here
     ],
 )
@@ -29,7 +26,7 @@ def test_create_audio_program_generator_failure(
     phrase_file, sound_file, kwargs, expected_error
 ):
     with pytest.raises(expected_error):
-        instance = apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
+        apg.AudioProgramGenerator(phrase_file, sound_file, **kwargs)
 
 
 def test_audio_program_generator_invoke(APG):
@@ -39,8 +36,10 @@ def test_audio_program_generator_invoke(APG):
 
 # Test existence of module functions
 def test_module_functions_exist():
-    assert "main" in dir(apg)
     assert "parse_textfile" in dir(apg)
+    assert "_gen_speech" in dir(apg.AudioProgramGenerator)
+    assert "_mix" in dir(apg.AudioProgramGenerator)
+    assert "invoke" in dir(apg.AudioProgramGenerator)
 
 
 # Test that all expected class methods are there
