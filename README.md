@@ -115,7 +115,7 @@ The `--slow` option generates each speech snippet is a slow-spoken style.
 
 The `--tld` option allows the user to select one of several regional 'accents' (English only). For accents, select one from the following list: ["com.au", "co.uk", "com", "ca", "co.in", "ie", "co.za"]
 
-Specifying option `--book-mode` creates a spoken-word program (with or without background soundfile). It does this by reading in a file that does not have inter-phrase durations inserted, as is normally the case. This feature is new and needs some tweaking. For now, just make sure your input file is pure text, and experiement with using a single line (with many sentences) as one paragraph vs. multiple lines, one per sentence. You wil notice a difference in how the 'speaker' pauses between phrases.
+Specifying option `--book-mode` creates a spoken-word program (with or without background soundfile). It does this by reading in a file that does not have inter-phrase durations inserted, as is normally the case.
 
 # Example `<phrase_file>` file format:
     Phrase One;2
