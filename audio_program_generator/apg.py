@@ -1,16 +1,18 @@
 """
 Generate audio program of spoken phrases, with optional background sound file mixed in
-
 """
 import os
 import re
 import math
+import concurrent.futures
+
+from dataclasses import dataclass
 from io import StringIO, TextIOWrapper, BytesIO, BufferedReader
 from typing import Union
+from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
-from pathlib import Path
 from single_source import get_version
 
 
@@ -33,15 +35,21 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
 
 class AudioProgramGenerator:
+    """Main class to generate speech output file with mixed-in background sound"""
+
+    @dataclass
+    class PhraseHandler:
+        index: int
+        phrase: str
+        duration: float
+        tempfile: BytesIO
+
     def __init__(
         self,
         phrase_file: Union[StringIO, TextIOWrapper],
         sound_file: BufferedReader = None,
         **kwargs,
     ):
-        """
-        Initialize class instance
-        """
         if isinstance(phrase_file, (TextIOWrapper, StringIO)):
             self.phrases = phrase_file.read()
         else:
@@ -61,6 +69,7 @@ class AudioProgramGenerator:
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
         self.book_mode = kwargs.get("book_mode", False)
         self.output_format = kwargs.get("output_format", "wav")
+        self.phrase_handlers = []  # A list of PhraseHandler objects
 
         config_handler.set_global(
             bar=None,
@@ -76,35 +85,54 @@ class AudioProgramGenerator:
         snippets from each line in the phrase_file + corresponding silence.
         """
 
-        combined = AudioSegment.empty()
+        def _create_tempfile(ph: AudioProgramGenerator.PhraseHandler) -> None:
+            """thread worker function to turn phrase into encoded snippet"""
+            tempfile = BytesIO(None)
+            speech = gTTS(ph.phrase, slow=self.slow, tld=self.tld)
+            speech.write_to_fp(tempfile)
+            tempfile.seek(0)
+            ph.tempfile = tempfile
 
+        i = 0
         if self.book_mode:
-            phrases = self.phrases.split(os.linesep)
-            durations = [None for elem in range(len(phrases))]
-            items = list(zip(phrases, durations))
+            for line in self.phrases.split(os.linesep):
+                phrase_handler = AudioProgramGenerator.PhraseHandler(
+                    index=i, phrase=line, duration=0, tempfile=None
+                )
+                self.phrase_handlers.append(phrase_handler)
+                i += 1
         else:
-            items = parse_textfile(self.phrases)
+            phrases_and_durations = parse_textfile(self.phrases)
+            for phrase_and_duration in phrases_and_durations:
+                phrase_handler = AudioProgramGenerator.PhraseHandler(
+                    index=i,
+                    phrase=phrase_and_duration[0],
+                    duration=phrase_and_duration[1],
+                    tempfile=None,
+                )
+                self.phrase_handlers.append(phrase_handler)
+                i += 1
 
-        for phr, dur in items:
-            # Skip blank phrases or gTTS will throw exception
-            if not phr.strip():
-                continue
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_tuples = []
+            for phrase_handler in self.phrase_handlers:
+                future_tuples.insert(
+                    phrase_handler.index,
+                    (
+                        phrase_handler.index,
+                        executor.submit(_create_tempfile, ph=phrase_handler),
+                    ),
+                )
+            concurrent.futures.wait([future_tuple[1] for future_tuple in future_tuples])
 
-            # Write gTTS snippet to temp file for later access
-            tmpfile = BytesIO(None)
-            speech = gTTS(phr, slow=self.slow, tld=self.tld)
-            speech.write_to_fp(tmpfile)
-            tmpfile.seek(0)
-
-            # Add the current speech snippet + corresponding silence
-            # to the combined file, building up for each new line.
-            snippet = AudioSegment.from_file(tmpfile, format="mp3")
-            combined += snippet
-            if dur:
-                combined += AudioSegment.silent(duration=1000 * int(dur))
-            tmpfile.close()
-
-        self.speech_file = combined
+        self.speech_file = AudioSegment.empty()
+        for phrase_handler in self.phrase_handlers:
+            snippet = AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
+            self.speech_file += snippet
+            if phrase_handler.duration:
+                self.speech_file += AudioSegment.silent(
+                    duration=1000 * int(phrase_handler.duration)
+                )
 
     def _mix(
         self,
@@ -118,7 +146,6 @@ class AudioProgramGenerator:
         Mixes two pydub AudioSegments, then fades the result in/out.
         Returns mixed AudioSegment.
         """
-
         duration1 = len(segment1)
         duration2 = len(segment2)
 
