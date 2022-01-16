@@ -1,7 +1,6 @@
 """
 Generate audio program of spoken phrases, with optional background sound file mixed in
 """
-import os
 import re
 import math
 import concurrent.futures
@@ -13,6 +12,7 @@ from pathlib import Path
 from gtts import gTTS
 from pydub import AudioSegment
 from alive_progress import alive_bar, config_handler
+from sentence_splitter import split_text_into_sentences
 from single_source import get_version
 
 
@@ -57,7 +57,6 @@ class AudioProgramGenerator:
                 TypeError,
                 f"phrase_file must be either StringIO or TextIOWrapper, not {type(phrase_file)}.",
             )
-
         self.__version__ = get_version(__name__, Path(__file__).parent.parent)
         self.sound_file = sound_file  # Fileobj to mix w/ generated speech
         self.slow = kwargs.get("slow", False)  # Half-speed speech if True
@@ -69,8 +68,9 @@ class AudioProgramGenerator:
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
         self.book_mode = kwargs.get("book_mode", False)
         self.output_format = kwargs.get("output_format", "wav")
-        self.phrase_handlers = []  # A list of PhraseHandler objects
+        self.phrase_handlers = []  # List of PhraseHandler objects for ThreadExecution
 
+        # Config items for progress bar
         config_handler.set_global(
             bar=None,
             stats=False,
@@ -86,18 +86,19 @@ class AudioProgramGenerator:
         """
 
         def _create_tempfile(ph: AudioProgramGenerator.PhraseHandler) -> None:
-            """thread worker function to turn phrase into encoded snippet"""
+            """Thread worker function to turn a phrase into encoded snippet"""
             tempfile = BytesIO(None)
             speech = gTTS(ph.phrase, slow=self.slow, tld=self.tld)
             speech.write_to_fp(tempfile)
             tempfile.seek(0)
             ph.tempfile = tempfile
 
+        # Get phrases and durations, and store values in PhraseHandler
         i = 0
         if self.book_mode:
-            for line in self.phrases.split(os.linesep):
+            for sentence in split_text_into_sentences(self.phrases, language="en"):
                 phrase_handler = AudioProgramGenerator.PhraseHandler(
-                    index=i, phrase=line, duration=0, tempfile=None
+                    index=i, phrase=sentence, duration=1, tempfile=None
                 )
                 self.phrase_handlers.append(phrase_handler)
                 i += 1
@@ -113,20 +114,16 @@ class AudioProgramGenerator:
                 self.phrase_handlers.append(phrase_handler)
                 i += 1
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            future_tuples = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
             for phrase_handler in self.phrase_handlers:
-                future_tuples.insert(
-                    phrase_handler.index,
-                    (
-                        phrase_handler.index,
-                        executor.submit(_create_tempfile, ph=phrase_handler),
-                    ),
-                )
-            concurrent.futures.wait([future_tuple[1] for future_tuple in future_tuples])
+                futures.append(executor.submit(_create_tempfile, ph=phrase_handler))
+            concurrent.futures.as_completed(futures)
 
         self.speech_file = AudioSegment.empty()
         for phrase_handler in self.phrase_handlers:
+            if not phrase_handler.tempfile:
+                continue
             snippet = AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
             self.speech_file += snippet
             if phrase_handler.duration:
