@@ -21,8 +21,6 @@
 .cache/
 .DS_Store
 
-apgfiles/
-
 __pycache__/
 results/
 htmlcov/
