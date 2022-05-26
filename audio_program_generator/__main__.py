@@ -58,7 +58,7 @@ def generate_subcommand(
     ),
     sound_path: Path = typer.Argument(
         None,
-        help="Path to .wav file to mix with generated speech. [optional]",
+        help="Path to input sound file to mix with generated speech. [optional]",
     ),
     output_path: Path = typer.Option(
         None,

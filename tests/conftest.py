@@ -28,14 +28,14 @@ def phrase_path() -> Path:
 
 
 @pytest.fixture(scope="session")
-def sound_path() -> Path:
-    """Path to a known good WAV file.
+def sound_path(format=".wav") -> Path:
+    """Path to a known good input file.
 
     mustang4.wav
     Source: https://freesound.org/people/VacekH/sounds/205507/
     License: CC0 1.0
     """
-    return Path(__file__).absolute().parent / "resources/mustang4.wav"
+    return Path(__file__).absolute().parent / f"resources/mustang4{format}"
 
 
 @pytest.fixture(scope="session")

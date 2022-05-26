@@ -72,3 +72,32 @@ def test_apg_main_specify_output_filetypes(
                 assert output_path.is_file()
                 assert output_path.suffix == expected_filetype
                 assert len(output_path.read_bytes()) > 0
+
+
+@pytest.mark.parametrize(
+    "input_format",
+    [
+        (".wav"),
+        (".mp3"),
+        (".ogg"),
+        (".mp4"),
+        (".flac"),
+    ],
+)
+def test_apg_main_different_input_filetypes(
+    clean,
+    phrase_path: Path,
+    sound_path: Path,
+    output_path,
+    input_format
+):
+    sys.argv = ["apg", str(phrase_path), str(sound_path)]
+    expected_filetype = ".wav"
+    try:
+        apg_main()
+    except SystemExit:
+        print("f")
+        assert output_path.exists()
+        assert output_path.is_file()
+        assert output_path.suffix == expected_filetype
+        assert len(output_path.read_bytes()) > 0

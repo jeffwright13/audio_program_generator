@@ -167,7 +167,7 @@ class AudioProgramGenerator:
         with alive_bar(0):
             self._gen_speech()
             if self.sound_file:
-                bkgnd = AudioSegment.from_file(self.sound_file, format="wav")
+                bkgnd = AudioSegment.from_file(self.sound_file)
                 self.mix_file = self._mix(self.speech_file, bkgnd, self.attenuation)
                 self.mix_file.export(self.result, format=self.output_format)
             else:
