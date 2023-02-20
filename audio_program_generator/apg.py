@@ -22,16 +22,22 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
     """
 
     def clean(dirty: str = "") -> str:
-        cleaner = r"[^A-Za-z0-9\s;\v]"
+        cleaner = r"[^A-Za-z0-9\*\s;\v]"
         cleaned = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
         return re.sub(cleaned, "", dirty)
 
     def capture(cleaned: str = "") -> list:
-        capturer = r"^\s*([\w\s]+?)\s*;\s*(\d+)\s*$"
+        capturer = r"^\s*([\w\s\*]+?)\s*;\s*(\d+)\s*$"
         captured = re.compile(capturer, flags=re.MULTILINE | re.UNICODE)
         return re.findall(captured, cleaned)
 
-    return capture(clean(phrase_file_contents))
+    cln = clean(phrase_file_contents)
+    cpt = capture(cln)
+
+    return cpt
+
+    # return capture(clean(phrase_file_contents))
+
 
 
 class AudioProgramGenerator:
@@ -42,7 +48,7 @@ class AudioProgramGenerator:
         index: int
         phrase: str
         duration: float
-        tempfile: BytesIO
+        tempfile: Union[BytesIO, AudioSegment]
 
     def __init__(
         self,
@@ -85,13 +91,16 @@ class AudioProgramGenerator:
         snippets from each line in the phrase_file + corresponding silence.
         """
 
-        def _create_tempfile(ph: AudioProgramGenerator.PhraseHandler) -> None:
-            """Thread worker function to turn a phrase into encoded snippet"""
-            tempfile = BytesIO(None)
-            speech = gTTS(ph.phrase, slow=self.slow, tld=self.tld)
-            speech.write_to_fp(tempfile)
-            tempfile.seek(0)
-            ph.tempfile = tempfile
+        def _create_tmp_speech_file(phrase_handler: AudioProgramGenerator.PhraseHandler) -> None:
+            """Thread worker function to turn a phrase into encoded snippet or silence"""
+            if phrase_handler.phrase == "*":
+                tempfile = AudioSegment.silent(duration=int(float(phrase_handler.duration)*1000))
+            else:
+                tempfile = BytesIO(None)
+                speech = gTTS(phrase_handler.phrase, slow=self.slow, tld=self.tld)
+                speech.write_to_fp(tempfile)
+                tempfile.seek(0)
+            phrase_handler.tempfile = tempfile
 
         # Get phrases and durations, and store values in PhraseHandler
         i = 0
@@ -117,15 +126,19 @@ class AudioProgramGenerator:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for phrase_handler in self.phrase_handlers:
-                futures.append(executor.submit(_create_tempfile, ph=phrase_handler))
+                futures.append(executor.submit(_create_tmp_speech_file, phrase_handler=phrase_handler))
             concurrent.futures.as_completed(futures)
 
         self.speech_file = AudioSegment.empty()
         for phrase_handler in self.phrase_handlers:
             if not phrase_handler.tempfile:
                 continue
-            snippet = AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
-            self.speech_file += snippet
+            if type(phrase_handler.tempfile) == AudioSegment:
+                self.speech_file += phrase_handler.tempfile
+            elif type(phrase_handler.tempfile) == BytesIO:
+                self.speech_file += AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
+            else:
+                raise TypeError(f"Unexpected type {type(phrase_handler.tempfile)} for phrase_handler.tempfile")
             if phrase_handler.duration:
                 self.speech_file += AudioSegment.silent(
                     duration=1000 * int(phrase_handler.duration)
@@ -153,7 +166,7 @@ class AudioProgramGenerator:
         else:
             segment2_normalized = segment2[:duration1]
 
-        return (segment1).overlay(
+        return segment1.overlay(
             (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
         )
 
@@ -163,7 +176,6 @@ class AudioProgramGenerator:
         background sound-file.
         Returns BytesIO object (encoded in format specified by 'output_format').
         """
-        # assert self.filenames_valid
         with alive_bar(0):
             self._gen_speech()
             if self.sound_file:
