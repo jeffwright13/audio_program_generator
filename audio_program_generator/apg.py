@@ -49,6 +49,7 @@ class AudioProgramGenerator:
         phrase: str
         duration: float
         tempfile: Union[BytesIO, AudioSegment]
+        audio_segment: AudioSegment
 
     def __init__(
         self,
@@ -74,7 +75,7 @@ class AudioProgramGenerator:
         self.hide_progress_bar = kwargs.get("hide_progress_bar", False)
         self.book_mode = kwargs.get("book_mode", False)
         self.output_format = kwargs.get("output_format", "wav")
-        self.phrase_handlers = []  # List of PhraseHandler objects for ThreadExecution
+        self.phrase_handlers = []
 
         # Config items for progress bar
         config_handler.set_global(
@@ -94,20 +95,22 @@ class AudioProgramGenerator:
         def _create_tmp_speech_file(phrase_handler: AudioProgramGenerator.PhraseHandler) -> None:
             """Thread worker function to turn a phrase into encoded snippet or silence"""
             if phrase_handler.phrase == "*":
-                tempfile = AudioSegment.silent(duration=int(float(phrase_handler.duration)*1000))
+                tempfile = audio_segment = AudioSegment.silent(duration=int(float(phrase_handler.duration)*1000))
             else:
                 tempfile = BytesIO(None)
                 speech = gTTS(phrase_handler.phrase, slow=self.slow, tld=self.tld)
                 speech.write_to_fp(tempfile)
                 tempfile.seek(0)
+                audio_segment = AudioSegment.from_file(tempfile, format="mp3")
+                tempfile.seek(0)
             phrase_handler.tempfile = tempfile
+            phrase_handler.audio_segment = audio_segment
 
-        # Get phrases and durations, and store values in PhraseHandler
         i = 0
         if self.book_mode:
             for sentence in split_text_into_sentences(self.phrases, language="en"):
                 phrase_handler = AudioProgramGenerator.PhraseHandler(
-                    index=i, phrase=sentence, duration=1, tempfile=None
+                    index=i, phrase=sentence, duration=1, tempfile=None, audio_segment=None
                 )
                 self.phrase_handlers.append(phrase_handler)
                 i += 1
@@ -119,6 +122,7 @@ class AudioProgramGenerator:
                     phrase=phrase_and_duration[0],
                     duration=phrase_and_duration[1],
                     tempfile=None,
+                    audio_segment=None,
                 )
                 self.phrase_handlers.append(phrase_handler)
                 i += 1
@@ -137,12 +141,12 @@ class AudioProgramGenerator:
                 self.speech_file += phrase_handler.tempfile
             elif type(phrase_handler.tempfile) == BytesIO:
                 self.speech_file += AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
+                if phrase_handler.duration:
+                    self.speech_file += AudioSegment.silent(
+                        duration=1000 * int(phrase_handler.duration)
+                    )
             else:
                 raise TypeError(f"Unexpected type {type(phrase_handler.tempfile)} for phrase_handler.tempfile")
-            if phrase_handler.duration:
-                self.speech_file += AudioSegment.silent(
-                    duration=1000 * int(phrase_handler.duration)
-                )
 
     def _mix(
         self,
