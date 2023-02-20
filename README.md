@@ -27,13 +27,18 @@ Options:
                                   File format for output file.  [default: wav]
   -a, --attenuation INTEGER       Set background file attenuation in dB.
                                   [default: 0]
+  --fi, --fadein INTEGER          Set fade-in duration in milliseconds.
+                                  [default: 3000]
+  --fo, --fadeout INTEGER         Set fade-out duration in milliseconds.
+                                  [default: 6000]
   -s, --slow                      Generate speech at half-speed.
   -r, --region [AU|CA|IE|IN|UK|US|ZA]
                                   Regional accent to apply to generated
                                   speech.  [default: US]
   -b, --book-mode                 Operates on plain-text file without
                                   phrase/pause formatting.
-  -H, --hide-progress-bar         Do not display progress bar during
+  -H, --hide, --hide-progress-bar
+                                  Do not display progress bar during
                                   execution.
   -v, --version                   Show version and exit.
   --install-completion [bash|zsh|fish|powershell|pwsh]
@@ -96,12 +101,12 @@ Or:
 # Detailed Usage
 *Assumes you are using the provided `apg` command line interface, installed with one of the methods above.  Refer to the source code if you are importing this code as a module/package.*
 
-Populate a semicolon-separated text file with plain-text phrases, each followed by an inter-phrase duration (see example below). Each line of the file is comprised of:
-   - a phrase to be spoken (in English)
+- Populate a semicolon-separated text file with plain-text phrases, each followed by an inter-phrase duration (see example below). Each line of the file is comprised of:
+   - a phrase to be spoken (in English) *or* an asterisk to indicate silence
    - a semicolon
    - a silence duration (in seconds)
-Provide a sound file for background sound (optional)
-Execute the command: `apg [options] <phrase_file> [sound_file]`
+- Provide a sound file for background sound (optional)
+- Execute the command: `apg [options] <phrase_file> [sound_file]`
 
 The script will generate and save a single audio file. The base name of the file will be the same as the specified input file. The output file will be saved to the same folder that the input text file was taken from, unless specified otherwise (using the "-o" option). For example, if the script is given input file "phrases.txt", the output file will be "phrases.wav" or "phrases.mp3"  or whatever the output format is set to be (using the "-f" option, which defults to ".wav").
 
@@ -117,12 +122,22 @@ The `--tld` option allows the user to select one of several regional 'accents' (
 
 Specifying option `--book-mode` creates a spoken-word program (with or without background soundfile). It does this by reading in a file that does not have inter-phrase durations inserted, as is normally the case.
 
-# Example `<phrase_file>` file format:
+# Example `<phrase_file>` file format
+This example will generate a speech-file that has 3 speech snippets ("Phrase One", "Phrase Two", "Phrase Three").
+
     Phrase One;2
     Phrase Two;5
     Phrase Three;0
+    
+# Example `<phrase_file>` file format
+This example will generate a speech-file that has 3 speech snippets ("Phrase One", "Phrase Two", "Phrase Three"), with a 3-second silence snippet appearing at the beginning.
 
-# Example `--book-mode` file format:
+    *; 3
+    Phrase One; 2
+    Phrase Two; 5
+    Phrase Three; 0
+
+# Example `--book-mode` file format
     Here we have sentence number one (which is a lovely sentence, and deserves its own paragraph).
 
     Here is a second paragraph, and this is sentence number one (again) in that paragraph. And this is sentence number two! Then shalt thou count to three - no more, no less. Three shall be the number thou shalt count, and the number of the counting shall be three. Four shalt thou not count, neither count thou two, excepting that thou then proceed to three. Five is right out. Once the number three, being the third number, be reached, then lobbest thou thy Holy Hand Grenade of Antioch towards thy foe, who, being naughty in my sight, shall snuff it.
