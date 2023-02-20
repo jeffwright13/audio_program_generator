@@ -1,17 +1,17 @@
 """
 Generate audio program of spoken phrases, with optional background sound file mixed in
 """
-import re
-import math
 import concurrent.futures
-
+import math
+import re
 from dataclasses import dataclass
-from io import StringIO, TextIOWrapper, BytesIO, BufferedReader
-from typing import Union
+from io import BufferedReader, BytesIO, StringIO, TextIOWrapper
 from pathlib import Path
+from typing import Union
+
+from alive_progress import alive_bar, config_handler
 from gtts import gTTS
 from pydub import AudioSegment
-from alive_progress import alive_bar, config_handler
 from sentence_splitter import split_text_into_sentences
 from single_source import get_version
 
@@ -22,22 +22,20 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
     """
 
     def clean(dirty: str = "") -> str:
-        cleaner = r"[^A-Za-z0-9\*\s;\v]"
+        cleaner = r"[^A-Za-z0-9\.\*\s;\v]"
         cleaned = re.compile(cleaner, flags=re.MULTILINE | re.UNICODE)
         return re.sub(cleaned, "", dirty)
 
     def capture(cleaned: str = "") -> list:
-        capturer = r"^\s*([\w\s\*]+?)\s*;\s*(\d+)\s*$"
+        # capturer = r"^\s*([\w\s\*]+?)\s*;\s*(\.??\d+)\s*$"
+        capturer = r"s*([\w\s\*]+?)\s*;\s*([1-9]\d*(\.\d*[1-9])?|0\.\d*[1-9]+)|\d+(\.\d*[1-9])?\s*$"
         captured = re.compile(capturer, flags=re.MULTILINE | re.UNICODE)
         return re.findall(captured, cleaned)
 
     cln = clean(phrase_file_contents)
-    cpt = capture(cln)
-
+    cpt = [c[:2] for c in capture(cln)]
     return cpt
-
     # return capture(clean(phrase_file_contents))
-
 
 
 class AudioProgramGenerator:
@@ -76,6 +74,8 @@ class AudioProgramGenerator:
         self.book_mode = kwargs.get("book_mode", False)
         self.output_format = kwargs.get("output_format", "wav")
         self.phrase_handlers = []
+        self.fadein = kwargs.get("fadein", 3000)
+        self.fadeout = kwargs.get("fadeout", 6000)
 
         # Config items for progress bar
         config_handler.set_global(
@@ -92,10 +92,14 @@ class AudioProgramGenerator:
         snippets from each line in the phrase_file + corresponding silence.
         """
 
-        def _create_tmp_speech_file(phrase_handler: AudioProgramGenerator.PhraseHandler) -> None:
+        def _create_tmp_speech_file(
+            phrase_handler: AudioProgramGenerator.PhraseHandler,
+        ) -> None:
             """Thread worker function to turn a phrase into encoded snippet or silence"""
             if phrase_handler.phrase == "*":
-                tempfile = audio_segment = AudioSegment.silent(duration=int(float(phrase_handler.duration)*1000))
+                tempfile = audio_segment = AudioSegment.silent(
+                    duration=phrase_handler.duration * 1000
+                )
             else:
                 tempfile = BytesIO(None)
                 speech = gTTS(phrase_handler.phrase, slow=self.slow, tld=self.tld)
@@ -110,7 +114,11 @@ class AudioProgramGenerator:
         if self.book_mode:
             for sentence in split_text_into_sentences(self.phrases, language="en"):
                 phrase_handler = AudioProgramGenerator.PhraseHandler(
-                    index=i, phrase=sentence, duration=1, tempfile=None, audio_segment=None
+                    index=i,
+                    phrase=sentence,
+                    duration=1,
+                    tempfile=None,
+                    audio_segment=None,
                 )
                 self.phrase_handlers.append(phrase_handler)
                 i += 1
@@ -130,7 +138,11 @@ class AudioProgramGenerator:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
             for phrase_handler in self.phrase_handlers:
-                futures.append(executor.submit(_create_tmp_speech_file, phrase_handler=phrase_handler))
+                futures.append(
+                    executor.submit(
+                        _create_tmp_speech_file, phrase_handler=phrase_handler
+                    )
+                )
             concurrent.futures.as_completed(futures)
 
         self.speech_file = AudioSegment.empty()
@@ -140,21 +152,23 @@ class AudioProgramGenerator:
             if type(phrase_handler.tempfile) == AudioSegment:
                 self.speech_file += phrase_handler.tempfile
             elif type(phrase_handler.tempfile) == BytesIO:
-                self.speech_file += AudioSegment.from_file(phrase_handler.tempfile, format="mp3")
+                self.speech_file += AudioSegment.from_file(
+                    phrase_handler.tempfile, format="mp3"
+                )
                 if phrase_handler.duration:
                     self.speech_file += AudioSegment.silent(
-                        duration=1000 * int(phrase_handler.duration)
+                        duration=1000 * float(phrase_handler.duration)
                     )
             else:
-                raise TypeError(f"Unexpected type {type(phrase_handler.tempfile)} for phrase_handler.tempfile")
+                raise TypeError(
+                    f"Unexpected type {type(phrase_handler.tempfile)} for phrase_handler.tempfile"
+                )
 
     def _mix(
         self,
         segment1: AudioSegment,
         segment2: AudioSegment,
         seg2_atten: int = 0,
-        fadein: int = 3000,
-        fadeout: int = 6000,
     ) -> AudioSegment:
         """
         Mixes two pydub AudioSegments, then fades the result in/out.
@@ -171,7 +185,9 @@ class AudioProgramGenerator:
             segment2_normalized = segment2[:duration1]
 
         return segment1.overlay(
-            (segment2_normalized - float(seg2_atten)).fade_in(fadein).fade_out(fadeout)
+            (segment2_normalized - float(seg2_atten))
+            .fade_in(self.fadein)
+            .fade_out(self.fadeout)
         )
 
     def invoke(self) -> BytesIO:

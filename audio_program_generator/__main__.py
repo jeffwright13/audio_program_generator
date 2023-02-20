@@ -2,11 +2,13 @@
 command-line interface for audio program generator
 
 """
-import typer
-from io import StringIO
-from typing import Optional
-from pathlib import Path
 from enum import Enum
+from io import StringIO
+from pathlib import Path
+from typing import Optional
+
+import typer
+
 from audio_program_generator.apg import AudioProgramGenerator
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -82,6 +84,20 @@ def generate_subcommand(
         show_default=True,
         help="Set background file attenuation in dB.",
     ),
+    fadein: int = typer.Option(
+        3000,
+        "--fi",
+        "--fadein",
+        show_default=True,
+        help="Set fade-in duration in milliseconds.",
+    ),
+    fadeout: int = typer.Option(
+        6000,
+        "--fo",
+        "--fadeout",
+        show_default=True,
+        help="Set fade-out duration in milliseconds.",
+    ),
     slow: bool = typer.Option(
         False,
         "-s",
@@ -108,6 +124,7 @@ def generate_subcommand(
     hide_progress_bar: bool = typer.Option(
         False,
         "-H",
+        "--hide",
         "--hide-progress-bar",
         is_flag=True,
         show_default=True,
@@ -121,7 +138,6 @@ def generate_subcommand(
         callback=version_callback,
     ),
 ) -> None:
-
     try:
         sound_file = sound_path.open("rb")
     except (AttributeError, FileNotFoundError):
