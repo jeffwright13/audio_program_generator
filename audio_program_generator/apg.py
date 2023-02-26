@@ -34,8 +34,7 @@ def parse_textfile(phrase_file_contents: str = "") -> list:
 
     cln = clean(phrase_file_contents)
     cpt = [c[:2] for c in capture(cln)]
-    return cpt
-    # return capture(clean(phrase_file_contents))
+    return [(c[0].strip(), c[1]) for c in cpt]
 
 
 class AudioProgramGenerator:
@@ -98,7 +97,7 @@ class AudioProgramGenerator:
             """Thread worker function to turn a phrase into encoded snippet or silence"""
             if phrase_handler.phrase == "*":
                 tempfile = audio_segment = AudioSegment.silent(
-                    duration=phrase_handler.duration * 1000
+                    duration=int(phrase_handler.duration) * 1000
                 )
             else:
                 tempfile = BytesIO(None)
